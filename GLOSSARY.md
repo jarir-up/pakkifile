@@ -28,7 +28,11 @@ _Avoid_: Document (a requirement may be met by several), rule
 The fact that makes a conditional requirement apply.
 
 **Source**:
-A published document or page a requirement is extracted from, recorded with section, URL and retrieval date.
+A published document or page that requirements cite, recorded once with its URL, publication date, retrieval date and source authority.
+
+**Citation**:
+A requirement's reference to one source: which source, which section, and whether it supports or conflicts with the requirement.
+_Avoid_: Reference, link
 
 **Source authority**:
 The rank of a source: official checklist above consulate page above service-provider page above agent above community story.
@@ -36,6 +40,10 @@ The rank of a source: official checklist above consulate page above service-prov
 **Confidence**:
 A computed measure of how sure the registry is about a requirement, from source authority, recency and agreement across sources.
 _Avoid_: Score, approval odds
+
+**Auto-publish**:
+A requirement published without a maintainer's review because it passes the approved rule; every other requirement needs review.
+_Avoid_: Approve (reserved for the owner's decisions)
 
 **Registry**:
 The public, versioned collection of requirements across authorities.

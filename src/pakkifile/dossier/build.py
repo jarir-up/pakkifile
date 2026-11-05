@@ -30,8 +30,8 @@ class Dossier:
 def build_dossier(entry: RegistryEntry, applicant: str, links: list[EvidenceLink]) -> Dossier:
     by_requirement = {link.requirement_id: link for link in links}
     return Dossier(
-        authority=entry.authority,
-        application=entry.application,
+        authority=entry.authority.name,
+        application=entry.application.label,
         applicant=applicant,
         items=tuple(DossierItem(r, by_requirement.get(r.id)) for r in entry.requirements),
     )

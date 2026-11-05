@@ -1,0 +1,131 @@
+authority:
+  name: Consulate General of Germany, Karachi
+  kind: consulate
+  authority_class: Schengen missions
+application:
+  name: Study visa
+  purpose: study
+  visa_category: D
+applicant_profile: Self-funded freelancer
+requirements:
+- id: application-form
+  text: Application for a national visa
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 1
+- id: biometric-photo
+  text: Biometric photo
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 2
+- id: declaration-section-54
+  text: Declaration pursuant to Section 54 (2) No. 8 Residence Act
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 3
+- id: declaration-section-55
+  text: Applicant's declaration pursuant to Section 55 (2) 1 Residence Act
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 4
+- id: passport-copies
+  text: Copies of pages 1 and 2 of the current passport
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 5
+- id: previous-visas
+  text: Copies of any previous visas
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 6
+- id: student-information-sheet
+  text: Information sheet for intending students
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 7
+- id: admission-letters
+  text: Admission letter(s)
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 8
+- id: blocked-account-confirmation
+  text: Confirmation letter for a blocked account holding €10,236
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 9
+- id: cv
+  text: Curriculum vitae
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 10
+- id: motivation-letter
+  text: Motivation letter
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 11
+- id: school-degree-certificates
+  text: O-level degree certificate and grade sheet
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 12
+  - source: de-missions-pk-study-visa-page
+    section: Mandatory documents
+- id: a-level-certificates
+  text: A-level degree certificate and grade sheet
+  type: conditional
+  condition: the applicant sat A-levels
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 13
+  - source: de-missions-pk-study-visa-page
+    section: Mandatory documents
+- id: university-certificates
+  text: Degree certificates and grade sheets of previous university studies
+  type: conditional
+  condition: the applicant has studied at a university
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 14
+  - source: de-missions-pk-study-visa-page
+    section: Mandatory documents
+- id: language-certificates
+  text: IELTS (or similar) and/or Goethe language certificates
+  type: mandatory
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 15
+- id: previous-refusals
+  text: Copies of refusal letters for any previous visas
+  type: conditional
+  condition: the applicant has been refused a visa before
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 16
+- id: proof-of-payment-of-tuition-fees
+  text: Proof of payment of tuition fees
+  type: conditional
+  condition: applicable to the course of study
+  citations:
+  - source: de-missions-pk-study-visa-page
+    section: Mandatory documents
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 17
+    stance: conflicts
+- id: further-documents
+  text: Any further documentation the applicant wishes to provide
+  type: optional
+  citations:
+  - source: de-cg-karachi-student-checklist
+    section: Checklist, item 18

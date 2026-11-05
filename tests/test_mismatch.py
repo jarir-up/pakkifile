@@ -1,16 +1,13 @@
 from datetime import date
 from decimal import Decimal
-from pathlib import Path
 
 from pakkifile.figures.continuity import SourceRow, UnattributedCredit
 from pakkifile.figures.money import Money
 from pakkifile.mismatch.continuity import check_unattributed_credit
-from pakkifile.registry.files import load_entry
+from tests.helpers import islamabad_study
 
 TUITION = next(
-    r
-    for r in load_entry(Path("registry-data/entries/de-islamabad-study-d.yaml")).requirements
-    if r.id == "proof-of-payment-of-tuition-fees"
+    r for r in islamabad_study().requirements if r.id == "proof-of-payment-of-tuition-fees"
 )
 ROW = SourceRow("statement-synthetic.csv", 14, date(2026, 9, 12), "CASH DEPOSIT")
 

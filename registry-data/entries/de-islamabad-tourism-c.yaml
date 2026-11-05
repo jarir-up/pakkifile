@@ -1,0 +1,130 @@
+authority:
+  name: German Embassy Islamabad
+  kind: embassy
+  authority_class: Schengen missions
+application:
+  name: Tourist visa
+  purpose: tourism
+  visa_category: C
+applicant_profile: Self-funded freelancer
+requirements:
+- id: passports
+  text: Current and all previous passports, valid at least three months after the
+    end of the requested visa
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: application-form
+  text: Signed Videx visa application form
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: biometric-photos
+  text: Two biometric passport photos, no older than six months
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: health-insurance
+  text: Travel health insurance covering all Schengen states, minimum cover €30,000
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: accommodation
+  text: Proof of accommodation for the whole stay
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: flight-tickets
+  text: Confirmed round-trip flight tickets
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: employment-confirmation
+  text: Confirmation of employment or university enrolment, with a no-objection certificate
+    for the trip
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: passport-copies
+  text: Copies of pages 1 and 2 of the current passport
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: previous-refusals
+  text: Copies of any previous visa refusals
+  type: conditional
+  condition: the applicant has been refused a visa before
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: cnic
+  text: Copy of the CNIC
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: frc
+  text: Family Registration Certificate (FRC) from NADRA, in English
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: marriage-certificate
+  text: Marriage certificate from NADRA, in English
+  type: conditional
+  condition: the applicant is married
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: birth-certificate
+  text: Birth certificate from NADRA, in English
+  type: conditional
+  condition: the applicant is a minor
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: list-of-children
+  text: List of children, on the mission's template
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: list-of-relatives-abroad
+  text: List of relatives living outside Pakistan, on the mission's template
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: appointment-email
+  text: Printout of the appointment email
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: paper-visas
+  text: Copies of visas issued on paper
+  type: conditional
+  condition: a previous visa was issued on paper, not in the passport
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: bank-statements
+  text: Bank statements for the past six months
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
+- id: salary-slips
+  text: Salary slips for the last three months
+  type: mandatory
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents

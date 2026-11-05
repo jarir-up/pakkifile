@@ -1,15 +1,22 @@
 {% extends "base.html" %}
-{% block title %}{{ entry.authority }} · {{ entry.application }}{% endblock %}
+{% block title %}{{ entry.authority.name }} · {{ entry.application.label }}{% endblock %}
 {% block main %}
-<h1>{{ entry.authority }} · {{ entry.application }}</h1>
+<h1>{{ entry.authority.name }} · {{ entry.application.label }}</h1>
 <table>
-<thead><tr><th>Requirement</th><th>Type</th><th>Source</th></tr></thead>
+<thead><tr><th>Requirement</th><th>Type</th><th>Confidence</th><th>Source</th></tr></thead>
 <tbody>
 {% for req in entry.requirements %}
 <tr class="requirement">
 <td>{{ req.text }}</td>
 <td>{{ req.type | capitalize }}{% if req.condition %}: {{ req.condition }}{% endif %}</td>
-<td><a href="{{ req.source.url }}">{{ req.source.document }}</a>, {{ req.source.section }}; retrieved {{ req.source.retrieved }}, verified {{ req.source.last_verified }}</td>
+<td>{{ levels[req.id] }}</td>
+<td>
+{% for c in req.citations %}{% set s = sources[c.source] %}
+{% if c.stance == "conflicts" %}Conflicts: {% endif %}
+<a href="{{ s.url }}">{{ s.document }}</a>{% if s.published %} ({{ s.published }}){% endif %}, {{ c.section }};
+retrieved {{ s.retrieved }}, verified {{ s.last_verified }}{% if not loop.last %}<br>{% endif %}
+{% endfor %}
+</td>
 </tr>
 {% endfor %}
 </tbody>

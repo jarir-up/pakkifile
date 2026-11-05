@@ -1,15 +1,14 @@
 from datetime import date
 from decimal import Decimal
 from html.parser import HTMLParser
-from pathlib import Path
 
 from pakkifile.dossier.build import EvidenceLink, build_dossier
 from pakkifile.figures.continuity import SourceRow, UnattributedCredit
 from pakkifile.figures.money import Money
-from pakkifile.registry.files import load_entry
 from pakkifile.web.dossier import render_dossier
+from tests.helpers import islamabad_study
 
-ENTRY = load_entry(Path("registry-data/entries/de-islamabad-study-d.yaml"))
+ENTRY = islamabad_study()
 CREDIT = UnattributedCredit(
     Money(90_000_000, "PKR"),
     Decimal("0.3750"),

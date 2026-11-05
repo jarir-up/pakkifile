@@ -1,37 +1,29 @@
-authority: German Embassy Islamabad
-application: Study visa (D)
+authority:
+  name: German Embassy Islamabad
+  kind: embassy
+  authority_class: Schengen missions
+application:
+  name: Study visa
+  purpose: study
+  visa_category: D
 applicant_profile: Self-funded freelancer
 requirements:
 - id: past-degree-certificates-school-bachelor-or-past-master-degrees
   text: Past degree certificates (school, bachelor or past master degrees)
   type: mandatory
-  condition: null
-  source:
-    document: Study visa, German Missions in Pakistan (27.11.2025)
+  citations:
+  - source: de-missions-pk-study-visa-page
     section: Mandatory documents
-    url: https://pakistan.diplo.de/pk-en/service/2-study-visa-seite-1676104
-    retrieved: '2026-10-30'
-    last_verified: '2026-10-30'
-    checksum: ee9832c5c55d34fe42727e1fdbdcb2df5503bddadb9cb5582a80f71023dbe2ba
 - id: degree-transcripts
   text: Degree transcripts
   type: mandatory
-  condition: null
-  source:
-    document: Study visa, German Missions in Pakistan (27.11.2025)
+  citations:
+  - source: de-missions-pk-study-visa-page
     section: Mandatory documents
-    url: https://pakistan.diplo.de/pk-en/service/2-study-visa-seite-1676104
-    retrieved: '2026-10-30'
-    last_verified: '2026-10-30'
-    checksum: ee9832c5c55d34fe42727e1fdbdcb2df5503bddadb9cb5582a80f71023dbe2ba
 - id: proof-of-payment-of-tuition-fees
   text: Proof of payment of tuition fees
   type: conditional
   condition: applicable to the course of study
-  source:
-    document: Study visa, German Missions in Pakistan (27.11.2025)
+  citations:
+  - source: de-missions-pk-study-visa-page
     section: Mandatory documents
-    url: https://pakistan.diplo.de/pk-en/service/2-study-visa-seite-1676104
-    retrieved: '2026-10-30'
-    last_verified: '2026-10-30'
-    checksum: ee9832c5c55d34fe42727e1fdbdcb2df5503bddadb9cb5582a80f71023dbe2ba

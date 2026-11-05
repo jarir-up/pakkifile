@@ -1,0 +1,23 @@
+de-cg-karachi-student-checklist:
+  document: Checklist of required documents for student and language course visas,
+    Consulate General Karachi
+  url: https://pakistan.diplo.de/resource/blob/2290888/dbca85b1c7f634f1a1290ec15a71ac76/checklist---student---language-course-visas-data.pdf
+  published: '2020-01-07'
+  retrieved: '2026-10-30'
+  last_verified: '2026-10-30'
+  source_authority: official_checklist
+  checksum: 42cc6dd2a33a6e34e048980a7fc201ac44f1a7d322ca44b7b241c5adb010defc
+de-missions-pk-study-visa-page:
+  document: Study visa, German Missions in Pakistan
+  url: https://pakistan.diplo.de/pk-en/service/2-study-visa-seite-1676104
+  published: '2025-11-27'
+  retrieved: '2026-10-30'
+  last_verified: '2026-10-30'
+  source_authority: consulate_page
+  checksum: ee9832c5c55d34fe42727e1fdbdcb2df5503bddadb9cb5582a80f71023dbe2ba
+de-missions-pk-tourist-visa-page:
+  document: Tourist visa, German Missions in Pakistan
+  url: https://pakistan.diplo.de/pk-en/service/3-tourist-visa-seite-1673122
+  retrieved: '2026-10-30'
+  last_verified: '2026-10-30'
+  source_authority: consulate_page

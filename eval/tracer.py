@@ -23,7 +23,7 @@ from evaldata.statement import TRACER_EXPECTED_SHARE, TRACER_FACTS, write_statem
 from pakkifile.dossier.build import EvidenceLink, build_dossier
 from pakkifile.figures.continuity import largest_unattributed_credit
 from pakkifile.mismatch.continuity import check_unattributed_credit
-from pakkifile.registry.files import load_entry
+from pakkifile.registry.files import load_registry
 from pakkifile.registry.model import RegistryEntry
 from pakkifile.sources.pipeline import TRACER_SOURCE, build_entry
 from pakkifile.vault.ingest import add_person, ingest_statement_csv
@@ -32,7 +32,7 @@ from pakkifile.web.checklist import render_checklist
 from pakkifile.web.dossier import render_dossier
 
 EXCERPT = Path("registry-data/sources/de-missions-pk-study-visa.html")
-PUBLISHED = Path("registry-data/entries/de-islamabad-study-d.yaml")
+REGISTRY = Path("registry-data")
 LABELS = Path("evaldata/labels/de-islamabad-study-d.yaml")
 DEFAULT_URL = "postgresql+psycopg://pakkifile:pakkifile@127.0.0.1:5433/pakkifile"
 TUITION = "proof-of-payment-of-tuition-fees"
@@ -77,19 +77,25 @@ def _extraction(entry: RegistryEntry) -> list[Result]:
 
 def run(conn: Connection, out: Path) -> list[Result]:
     results: list[Result] = []
-    entry = build_entry(EXCERPT.read_text(), TRACER_SOURCE, verified=date.today())
+    entry, _ = build_entry(EXCERPT.read_text(), TRACER_SOURCE, verified=date.today())
     results += _extraction(entry)
 
-    published = load_entry(PUBLISHED)
-    rebuilt = build_entry(
+    registry = load_registry(REGISTRY)
+    published = next(
+        e
+        for e in registry.entries
+        if e.authority.name == TRACER_SOURCE.authority.name
+        and e.application == TRACER_SOURCE.application
+    )
+    rebuilt, source = build_entry(
         EXCERPT.read_text(),
         TRACER_SOURCE,
-        verified=published.requirements[0].source.last_verified,
+        verified=registry.sources[TRACER_SOURCE.source_id].last_verified,
     )
-    same = published == rebuilt
+    same = published == rebuilt and registry.sources[TRACER_SOURCE.source_id] == source
     results.append(Result("registry", "published entry matches source", str(same), same))
 
-    checklist = render_checklist(published)
+    checklist = render_checklist(published, registry.sources, date.today())
     rows = len(_found(checklist, "requirement"))
     results.append(
         Result(

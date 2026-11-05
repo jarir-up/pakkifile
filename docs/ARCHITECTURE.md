@@ -28,7 +28,7 @@ Licence: AGPL-3.0 for code, CC BY-SA 4.0 for registry data (ADR-0031).
 ## Folder map
 
 ```
-registry-data/  YAML, one file per application; community stories (ADR-0040)
+registry-data/  YAML: sources.yaml (each source once) and one entry file per application (ADR-0040, ADR-0043)
 src/pakkifile/
   registry/     requirement model, confidence scoring, auto-publish rule
   sources/      fetch, checksum, change detection, extraction of official documents

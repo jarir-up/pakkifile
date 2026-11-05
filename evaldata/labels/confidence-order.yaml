@@ -1,0 +1,8 @@
+# Hand judgement of how sure the registry should be, most sure first.
+# Requirements in the same tier are judged equally sure. Owner reviews.
+- - {authority: "Consulate General of Germany, Karachi", purpose: study, id: school-degree-certificates}
+- - {authority: German Embassy Islamabad, purpose: study, id: degree-transcripts}
+  - {authority: German Embassy Islamabad, purpose: tourism, id: health-insurance}
+- - {authority: "Consulate General of Germany, Karachi", purpose: study, id: proof-of-payment-of-tuition-fees}
+- - {authority: "Consulate General of Germany, Karachi", purpose: study, id: blocked-account-confirmation}
+  - {authority: "Consulate General of Germany, Karachi", purpose: study, id: motivation-letter}

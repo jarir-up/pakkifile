@@ -7,7 +7,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 
 FAST=("uv run --frozen ruff check ." "uv run --frozen ruff format --check ." "uv run --frozen mypy")
-SLOW=("uv run --frozen pytest" "uv run --frozen python -m eval.tracer" "uv build --quiet")
+SLOW=("uv run --frozen pytest" "uv run --frozen python -m eval.tracer" "uv run --frozen python -m eval.registry" "uv build --quiet")
 
 if [ ${#FAST[@]} -eq 0 ] && [ ${#SLOW[@]} -eq 0 ]; then
   echo "scripts/check.sh has no checks configured yet. Wiring them up is the first issue." >&2
