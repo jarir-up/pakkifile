@@ -51,6 +51,7 @@ Don't install skills that duplicate what this repo already does. `.claude/settin
 |---|---|
 | All checks (lint, types, tests, build) | `./scripts/check.sh` |
 | Fast checks only (lint, types) | `./scripts/check.sh --fast` |
+| Start the local database (tests need it) | `docker compose up -d --wait db` |
 | Run the app locally | Set by the first issue that adds a runnable app; record the command here |
 
 Hooks run the fast checks after each edit and the full checks before you finish a turn with uncommitted changes. When a hook reports a failure, fix the cause; don't silence the check.

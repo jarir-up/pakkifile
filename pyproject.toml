@@ -4,10 +4,21 @@ version = "0.0.0"
 description = "Open-source, local-first evidence compiler for freelancers' visa, loan and rental files."
 license = "AGPL-3.0-only"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "jinja2>=3.1.6",
+    "psycopg[binary]>=3.3.6",
+    "pydantic>=2.14.2",
+    "pyyaml>=6.0.3",
+    "sqlalchemy>=2.1.6",
+]
 
 [dependency-groups]
-dev = ["ruff", "mypy", "pytest"]
+dev = [
+    "ruff",
+    "mypy",
+    "pytest",
+    "types-pyyaml>=6.0.12.20261030",
+]
 
 [build-system]
 requires = ["uv_build>=0.12,<0.13"]
@@ -25,8 +36,9 @@ ignore = ["E501"]
 
 [tool.mypy]
 strict = true
-files = ["src", "tests"]
+files = ["src", "tests", "evaldata", "eval"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-q"

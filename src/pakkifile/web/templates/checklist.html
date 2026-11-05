@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ entry.authority }} · {{ entry.application }}{% endblock %}
+{% block main %}
+<h1>{{ entry.authority }} · {{ entry.application }}</h1>
+<table>
+<thead><tr><th>Requirement</th><th>Type</th><th>Source</th></tr></thead>
+<tbody>
+{% for req in entry.requirements %}
+<tr class="requirement">
+<td>{{ req.text }}</td>
+<td>{{ req.type | capitalize }}{% if req.condition %}: {{ req.condition }}{% endif %}</td>
+<td><a href="{{ req.source.url }}">{{ req.source.document }}</a>, {{ req.source.section }}; retrieved {{ req.source.retrieved }}, verified {{ req.source.last_verified }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

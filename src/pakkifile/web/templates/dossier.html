@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Dossier · {{ dossier.applicant }}{% endblock %}
+{% block main %}
+<h1>{{ dossier.authority }} · {{ dossier.application }}</h1>
+<p>{{ dossier.applicant }}</p>
+<table>
+<thead><tr><th>Requirement</th><th>Evidence</th></tr></thead>
+<tbody>
+{% for item in dossier.items %}
+<tr>
+<td>{{ loop.index }}. {{ item.requirement.text }}</td>
+<td>
+{% if item.evidence %}
+{{ item.evidence.file_name }}
+{% if item.evidence.figure %}{% set f = item.evidence.figure %}{% set row = f.rows[0] %}
+<br>Largest credit with no identified sender:
+<a class="figure" href="#row-{{ row.row_no }}" data-source="{{ row.file_name }}, row {{ row.row_no }}">{{ f.amount.display() }}</a>
+{% endif %}
+{% else %}Not provided{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<h2>Sources</h2>
+<table>
+<thead><tr><th>File</th><th>Row</th><th>Date</th><th>Description</th></tr></thead>
+<tbody>
+{% for item in dossier.items if item.evidence and item.evidence.figure %}
+{% for row in item.evidence.figure.rows %}
+<tr id="row-{{ row.row_no }}"><td>{{ row.file_name }}</td><td>{{ row.row_no }}</td><td>{{ row.date }}</td><td>{{ row.description }}</td></tr>
+{% endfor %}
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

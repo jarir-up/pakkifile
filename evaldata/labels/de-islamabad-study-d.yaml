@@ -1,0 +1,10 @@
+# Hand-labelled checklist for the tracer. Ground truth for extraction evaluation.
+- text: Past degree certificates (school, bachelor or past master degrees)
+  type: mandatory
+  condition: null
+- text: Degree transcripts
+  type: mandatory
+  condition: null
+- text: Proof of payment of tuition fees
+  type: conditional
+  condition: applicable to the course of study

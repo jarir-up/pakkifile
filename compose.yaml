@@ -1,0 +1,13 @@
+services:
+  db:
+    image: pgvector/pgvector:0.8.0-pg17
+    environment:
+      POSTGRES_USER: pakkifile
+      POSTGRES_PASSWORD: pakkifile
+      POSTGRES_DB: pakkifile
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "pakkifile"]
+      interval: 2s
+      retries: 15

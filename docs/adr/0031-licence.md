@@ -7,7 +7,7 @@
 The code is open source (ADR-0002) and the registry is meant to stay a public good. A permissive licence would let a hosted fork close its changes.
 
 ## Decision
-Code is licensed AGPL-3.0. Registry data is licensed CC BY-SA 4.0.
+Code is licensed AGPL-3.0-only. Registry data is licensed CC BY-SA 4.0.
 
 ## Consequences
 Anyone hosting a modified fork must publish its source. Derived checklists must stay open and credit the registry. Some companies avoid AGPL dependencies; that is accepted.

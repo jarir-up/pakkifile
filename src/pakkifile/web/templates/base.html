@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{% endblock %}</title>
+{% include "tokens.html" %}
+<style>
+body {
+  margin: 0; padding: var(--space-4) var(--space-3); background: var(--bg); color: var(--fg);
+  font: var(--text-md)/1.5 system-ui, sans-serif;
+}
+main { max-width: var(--table-max); margin: 0 auto; }
+h1 { font-size: var(--text-xl); margin: 0 0 var(--space-4); }
+h2 { font-size: var(--text-lg); margin: var(--space-5) 0 var(--space-3); }
+p { max-width: var(--measure); }
+a { color: var(--accent); }
+table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+th, td { text-align: left; vertical-align: top; padding: var(--space-2); border-bottom: thin solid var(--line); }
+.figure { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<main>
+{% block main %}{% endblock %}
+</main>
+</body>
+</html>
