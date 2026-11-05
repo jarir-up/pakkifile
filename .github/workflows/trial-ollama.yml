@@ -1,0 +1,47 @@
+# Throwaway trial, never merged. Answers: reachability, speed and quality on the free CPU runner.
+name: trial-ollama
+
+on:
+  push:
+    branches: [trial/ollama-karachi]
+
+jobs:
+  reach:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Can the runner reach official sources?
+        run: |
+          for url in \
+            https://pakistan.diplo.de/pk-en/service/2-study-visa-seite-1676104 \
+            https://pakistan.diplo.de/pk-en/service/3-tourist-visa-seite-1673122 \
+            https://pakistan.diplo.de/resource/blob/2290888/dbca85b1c7f634f1a1290ec15a71ac76/checklist---student---language-course-visas-data.pdf \
+            https://ambislamabad.esteri.it/en/ \
+            https://vistoperitalia.esteri.it/home/en \
+            https://france-visas.gouv.fr/en/ \
+            https://pk.ambafrance.org/ ; do
+            code=$(curl -sL -o /dev/null -m 30 -A "PakkiFile registry" -w '%{http_code}' "$url" || true)
+            echo "$code $url" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
+
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        model: ["llama3.2:3b", "llama3.1:8b", "qwen2.5:7b"]
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+      - name: Wait for the Ollama server
+        run: |
+          curl -sf http://127.0.0.1:11434/api/tags >/dev/null || (nohup ollama serve >/tmp/ollama.log 2>&1 &)
+          timeout 60 bash -c 'until curl -sf http://127.0.0.1:11434/api/tags >/dev/null; do sleep 1; done'
+      - name: Download model
+        run: |
+          start=$SECONDS
+          ollama pull "${{ matrix.model }}"
+          echo "Download: $((SECONDS-start)) s; $(ollama list | tail -1)" | tee -a "$GITHUB_STEP_SUMMARY"
+      - run: python3 scripts/trial_extract.py --model "${{ matrix.model }}"
