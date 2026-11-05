@@ -1,6 +1,6 @@
 # Rules — PakkiFile
 
-A second model checks every pull request's diff against these rules, and the merge is blocked on any violation.
+A second model checks every pull request's diff against these rules, and the merge is blocked on any violation. That CI gate is disabled while the project runs on zero spend; `/code-review` against this file before every commit stands in (see `docs/PROGRESS.md`).
 
 How to keep this file useful:
 - If a linter, formatter or type checker can enforce a rule, configure the tool and leave the rule out of this file.

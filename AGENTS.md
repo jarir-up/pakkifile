@@ -58,17 +58,17 @@ Hooks run the fast checks after each edit and the full checks before you finish 
 
 ## Permissions
 
-Pushing, installing dependencies and network calls ask for approval. Secrets and destructive commands are blocked. See `.claude/settings.json`. Adding a dependency also needs an approved ADR (RULES R-02).
+Pushing, installing dependencies and network calls ask for approval, except fetching from the official source domains allowed in `.claude/settings.json`. Secrets and destructive commands are blocked. See `.claude/settings.json`. Adding a dependency also needs an approved ADR (RULES R-02).
 
 ## Merging
 
-Every pull request passes two CI gates: `./scripts/check.sh`, and a second model reviewing the diff against `docs/RULES.md`. To accept a flagged violation on purpose, the owner adds `waive R-07: <reason>` to the PR description. Never add waivers yourself.
+Every pull request passes `./scripts/check.sh` in CI. The second gate, a model reviewing the diff against `docs/RULES.md`, is disabled while the project runs on zero spend (see `docs/PROGRESS.md`); until it returns, `/code-review` against `docs/RULES.md` before every commit stands in. To accept a flagged violation on purpose, the owner adds `waive R-07: <reason>` to the PR description. Never add waivers yourself.
 
 ## Agent skills
 
 ### Issue tracker
 
-Local markdown under `.scratch/` until the GitHub repo exists, then GitHub issues. See `docs/agents/issue-tracker.md`.
+GitHub issues. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

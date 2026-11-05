@@ -7,7 +7,25 @@
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:pakistan.diplo.de)",
+      "WebFetch(domain:digital.diplo.de)",
+      "WebFetch(domain:www.auswaertiges-amt.de)",
+      "WebFetch(domain:www.make-it-in-germany.com)",
+      "WebFetch(domain:ambislamabad.esteri.it)",
+      "WebFetch(domain:conskarachi.esteri.it)",
+      "WebFetch(domain:vistoinitalia.esteri.it)",
+      "WebFetch(domain:france-visas.gouv.fr)",
+      "WebFetch(domain:pk.ambafrance.org)",
+      "WebFetch(domain:visa.vfsglobal.com)",
+      "WebFetch(domain:www.vfsglobal.com)",
+      "WebFetch(domain:home-affairs.ec.europa.eu)",
+      "WebFetch(domain:eur-lex.europa.eu)",
+      "WebFetch(domain:www.sbp.org.pk)",
+      "WebFetch(domain:www.fbr.gov.pk)",
+      "WebFetch(domain:beoe.gov.pk)",
+      "WebFetch(domain:www.mofa.gov.pk)",
+      "WebFetch(domain:www.secp.gov.pk)"
     ],
     "ask": [
       "Bash(git push:*)",
@@ -20,8 +38,7 @@
       "Bash(cargo add:*)",
       "Bash(go get:*)",
       "Bash(curl:*)",
-      "Bash(wget:*)",
-      "WebFetch"
+      "Bash(wget:*)"
     ],
     "deny": [
       "Read(./.env)",
@@ -39,14 +56,20 @@
       {
         "matcher": "Edit|MultiEdit|Write",
         "hooks": [
-          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/after-edit.sh" }
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/after-edit.sh"
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/before-stop.sh" }
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/before-stop.sh"
+          }
         ]
       }
     ]

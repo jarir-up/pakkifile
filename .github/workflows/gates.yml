@@ -27,15 +27,17 @@ jobs:
       - run: uv sync --frozen
       - run: ./scripts/check.sh
 
-  rules:
-    # Also re-runs when the PR description is edited, so a new waiver takes effect.
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - run: python3 scripts/rules_gate.py
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          RULES_GATE_MODEL: ${{ vars.RULES_GATE_MODEL }}
-          BASE_REF: ${{ github.base_ref }}
+  # Disabled: zero spend, no paid APIs. Re-enable once scripts/rules_gate.py
+  # uses GitHub Models (see Waiting on owner in docs/PROGRESS.md).
+  # rules:
+  #   # Also re-runs when the PR description is edited, so a new waiver takes effect.
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #     - run: python3 scripts/rules_gate.py
+  #       env:
+  #         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  #         RULES_GATE_MODEL: ${{ vars.RULES_GATE_MODEL }}
+  #         BASE_REF: ${{ github.base_ref }}

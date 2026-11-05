@@ -16,11 +16,11 @@ From approved ADRs. Versions are verified when each dependency is added.
 | Tooling | uv, ruff, mypy, pytest | 0013 |
 | Agent orchestration | LangGraph for the readiness agent; retrieval and checks as plain Python and SQL | 0015 |
 | Embeddings and reranking | Local open models | 0016 |
-| Language model | Claude for extraction and drafting (placeholders, no applicant figures or names); local model for ambiguous rows | 0012 |
+| Language model | Local model via Ollama for all LLM work; hosted model optional and off by default; drafts use placeholders | 0012 |
 | Tracing | Langfuse, self-hosted, development and CI only | 0034 |
 | Pages | Jinja2 templates, no JavaScript framework; static build for the checklist, served live by the local app | 0039 |
 | Local packaging | `docker compose` for v0 | 0032 |
-| CI | GitHub Actions: `scripts/check.sh` plus the rules gate | 0023 |
+| CI | GitHub Actions: `scripts/check.sh`; the rules gate is disabled for zero spend | 0023, 0012 |
 | Hosting | GitHub Pages for the checklist site | 0030 |
 
 Licence: AGPL-3.0 for code, CC BY-SA 4.0 for registry data (ADR-0031).
@@ -74,9 +74,9 @@ tests/
 | Service | Use | Credentials |
 |---|---|---|
 | Official sources (embassy, VFS, BLS, SBP, FBR pages and PDFs) | Registry input | None; public |
-| Anthropic (Claude) | Requirement extraction, drafting | Key from env, never committed; Actions secret for the registry pipeline |
-| Local model | Ambiguous-row classification | None |
-| GitHub | Code, issues, CI | Repo secrets for the rules gate (`ANTHROPIC_API_KEY`) |
+| Ollama (local) | Requirement extraction, ambiguous-row classification, drafting | None |
+| Hosted model (optional, off by default) | Same, when configured | Key from env, never committed |
+| GitHub | Code, issues, CI | None |
 
 ## Decisions
 
