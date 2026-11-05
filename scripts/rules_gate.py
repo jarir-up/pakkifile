@@ -9,6 +9,7 @@ description with a line like `waive R-07: <reason>`.
 Standard library only, so CI needs no install step.
 Env: ANTHROPIC_API_KEY (required), RULES_GATE_MODEL, BASE_REF, MAX_DIFF_CHARS.
 """
+
 import json
 import os
 import re
@@ -36,9 +37,18 @@ REPORT_TOOL = {
                     "properties": {
                         "rule": {"type": "string", "description": "Rule ID, e.g. R-05"},
                         "file": {"type": "string"},
-                        "line": {"type": "integer", "description": "Line number in the new file, or 0 if not applicable"},
-                        "evidence": {"type": "string", "description": "The offending code, at most a few lines"},
-                        "why": {"type": "string", "description": "One sentence on how this breaks the rule"},
+                        "line": {
+                            "type": "integer",
+                            "description": "Line number in the new file, or 0 if not applicable",
+                        },
+                        "evidence": {
+                            "type": "string",
+                            "description": "The offending code, at most a few lines",
+                        },
+                        "why": {
+                            "type": "string",
+                            "description": "One sentence on how this breaks the rule",
+                        },
                     },
                     "required": ["rule", "file", "line", "evidence", "why"],
                 },
@@ -74,10 +84,12 @@ def call_reviewer(rules, diff, model, api_key):
         "max_tokens": 8000,
         "tools": [REPORT_TOOL],
         "tool_choice": {"type": "tool", "name": "report"},
-        "messages": [{
-            "role": "user",
-            "content": f"{INSTRUCTIONS}\n\n<rules>\n{rules}\n</rules>\n\n<diff>\n{diff}\n</diff>",
-        }],
+        "messages": [
+            {
+                "role": "user",
+                "content": f"{INSTRUCTIONS}\n\n<rules>\n{rules}\n</rules>\n\n<diff>\n{diff}\n</diff>",
+            }
+        ],
     }
     request = urllib.request.Request(
         API_URL,
@@ -99,9 +111,13 @@ def call_reviewer(rules, diff, model, api_key):
 def format_report(blocking, waived, waivers):
     lines = []
     for v in blocking:
-        lines.append(f"- **{v['rule']}** `{v['file']}:{v['line']}` {v['why']}\n  ```\n  {v['evidence']}\n  ```")
+        lines.append(
+            f"- **{v['rule']}** `{v['file']}:{v['line']}` {v['why']}\n  ```\n  {v['evidence']}\n  ```"
+        )
     for v in waived:
-        lines.append(f"- ~~{v['rule']}~~ `{v['file']}:{v['line']}` waived: {waivers[v['rule'].upper()]}")
+        lines.append(
+            f"- ~~{v['rule']}~~ `{v['file']}:{v['line']}` waived: {waivers[v['rule'].upper()]}"
+        )
     return "\n".join(lines)
 
 
@@ -139,7 +155,9 @@ def main():
         return
     if len(diff) > max_chars:
         # Truncating would let violations past unseen, so fail instead.
-        write_summary(f"Rules gate: diff is {len(diff)} chars, over the {max_chars} limit. Split this PR into smaller tasks.")
+        write_summary(
+            f"Rules gate: diff is {len(diff)} chars, over the {max_chars} limit. Split this PR into smaller tasks."
+        )
         sys.exit(1)
 
     try:
@@ -152,7 +170,9 @@ def main():
     waivers = parse_waivers(pr_body_from_event())
     blocking, waived = split_by_waiver(violations, waivers)
     status = "FAILED" if blocking else "passed"
-    write_summary(f"## Rules gate {status} ({model})\n\n{format_report(blocking, waived, waivers) or 'No violations.'}")
+    write_summary(
+        f"## Rules gate {status} ({model})\n\n{format_report(blocking, waived, waivers) or 'No violations.'}"
+    )
     if blocking:
         sys.exit(1)
 

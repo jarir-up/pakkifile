@@ -6,11 +6,8 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-# Fill these in for this project's stack (the first issue), e.g.
-#   FAST=("npm run lint" "npx tsc --noEmit")
-#   SLOW=("npm test" "npm run build")
-FAST=()
-SLOW=()
+FAST=("uv run --frozen ruff check ." "uv run --frozen ruff format --check ." "uv run --frozen mypy")
+SLOW=("uv run --frozen pytest" "uv build --quiet")
 
 if [ ${#FAST[@]} -eq 0 ] && [ ${#SLOW[@]} -eq 0 ]; then
   echo "scripts/check.sh has no checks configured yet. Wiring them up is the first issue." >&2

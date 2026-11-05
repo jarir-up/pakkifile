@@ -10,7 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Add your stack's setup step here (setup-node, setup-python, ...).
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.23"
+          python-version: "3.12"
+      - run: uv sync --frozen
       - run: ./scripts/check.sh
 
   rules:

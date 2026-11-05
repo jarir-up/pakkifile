@@ -62,3 +62,17 @@ Pushing, installing dependencies and network calls ask for approval. Secrets and
 ## Merging
 
 Every pull request passes two CI gates: `./scripts/check.sh`, and a second model reviewing the diff against `docs/RULES.md`. To accept a flagged violation on purpose, the owner adds `waive R-07: <reason>` to the PR description. Never add waivers yourself.
+
+## Agent skills
+
+### Issue tracker
+
+Local markdown under `.scratch/` until the GitHub repo exists, then GitHub issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default role labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context. See `docs/agents/domain.md`.

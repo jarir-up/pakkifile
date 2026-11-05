@@ -10,3 +10,4 @@ __pycache__/
 *.pyc
 # Real personal documents never enter the repo
 vault/
+dist/
