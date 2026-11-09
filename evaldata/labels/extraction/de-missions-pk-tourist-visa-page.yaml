@@ -1,0 +1,26 @@
+# Hand labels from the page's "Required documents" section. An item matches a label when it
+# contains every must_contain entry and none of must_not_contain; whole numbers must match
+# exactly. required: false marks documents the page accepts but does not ask for.
+- {text: Current and previous passports, type: [mandatory], must_contain: [previous passports], must_not_contain: [lost]}
+- {text: Videx application form, type: [mandatory], must_contain: [videx]}
+- {text: Two biometric photos, type: [mandatory], must_contain: [two, photo]}
+- {text: Health insurance of at least 30000 euro, type: [mandatory], must_contain: [insurance, "30000"]}
+- {text: Proof of accommodation, type: [mandatory], must_contain: [accommodation]}
+- {text: Round-trip flight, type: [mandatory], must_contain: [flight]}
+- {text: Employment or university confirmation and NOC, type: [mandatory], must_contain: [employment]}
+- {text: Copies of pages 1 and 2 of the current passport, type: [mandatory], must_contain: [passport, "1", "2"]}
+- {text: Police report for a lost passport, type: [conditional], must_contain: [police report], condition_contains: lost}
+- {text: Previous visa refusals, type: [mandatory, conditional], must_contain: [refusal]}
+- {text: CNIC copy, type: [mandatory], must_contain: [cnic]}
+- {text: Family Registration Certificate, type: [mandatory], must_contain: [frc], must_not_contain: [marriage]}
+- {text: Marriage certificate, type: [conditional], must_contain: [marriage], must_not_contain: [birth], condition_contains: applicable}
+- {text: Birth certificate, type: [conditional], must_contain: [birth], must_not_contain: [marriage], condition_contains: minor}
+- {text: List of children, type: [mandatory], must_contain: [children]}
+- {text: List of relatives abroad, type: [mandatory], must_contain: [relatives]}
+- {text: Appointment email, type: [mandatory], must_contain: [appointment]}
+- {text: Copies of previous visas, type: [mandatory, conditional], must_contain: [visa, cop], must_not_contain: [refusal]}
+- {text: Bank statements for six months, type: [mandatory], must_contain: [bank statements, six months]}
+- {text: Salary slips for three months, type: [mandatory], must_contain: [salary slips, three months]}
+- {text: Pension books, type: [optional], must_contain: [pension], required: false}
+- {text: Investment documents, type: [optional], must_contain: [investment], required: false}
+- {text: Property documents, type: [optional], must_contain: [property], required: false}

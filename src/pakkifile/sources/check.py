@@ -3,8 +3,6 @@
 uv run python -m pakkifile.sources.check
 """
 
-import http.client
-import subprocess
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
@@ -13,18 +11,10 @@ from typing import Literal
 
 from pakkifile.registry.files import SOURCES_FILE, load_sources, save_sources
 from pakkifile.registry.model import Source
-from pakkifile.sources.fetch import FetchedSource, fetch
+from pakkifile.sources.fetch import FETCH_FAILURES, FetchedSource, fetch
 
 CheckStatus = Literal["unchanged", "changed", "new", "failed"]
 REGISTRY = Path("registry-data")
-# What one source can raise without being a bug here: network, HTTP, decoding, pdftotext.
-_FETCH_FAILURES = (
-    OSError,
-    http.client.HTTPException,
-    UnicodeError,
-    LookupError,
-    subprocess.CalledProcessError,
-)
 
 
 @dataclass(frozen=True)
@@ -40,10 +30,10 @@ def _compare(source: Source, fetched: FetchedSource, as_of: date) -> SourceCheck
         return SourceCheck(source, "failed", error="no text found")
     if source.checksum is None:
         update = {"checksum": fetched.checksum, "retrieved": as_of, "last_verified": as_of}
-        return SourceCheck(source.model_copy(update=update), "new", text=fetched.body)
+        return SourceCheck(source.model_copy(update=update), "new", text=fetched.text)
     if source.checksum == fetched.checksum:
         return SourceCheck(source.model_copy(update={"last_verified": as_of}), "unchanged")
-    return SourceCheck(source, "changed", text=fetched.body)
+    return SourceCheck(source, "changed", text=fetched.text)
 
 
 def check_sources(sources: Mapping[str, Source], as_of: date) -> dict[str, SourceCheck]:
@@ -51,7 +41,7 @@ def check_sources(sources: Mapping[str, Source], as_of: date) -> dict[str, Sourc
     for source_id, source in sources.items():
         try:
             checks[source_id] = _compare(source, fetch(source.url), as_of)
-        except _FETCH_FAILURES as error:
+        except FETCH_FAILURES as error:
             checks[source_id] = SourceCheck(source, "failed", error=repr(error))
     return checks
 

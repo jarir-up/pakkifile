@@ -6,7 +6,6 @@ What's done lives in closed issues and merged PRs. This file holds only what the
 
 Q-1 to Q-15 settled 2026-10-30 (ADR-0012, 0030 to 0041; DESIGN.md; RULES R-22).
 
-- **Extraction model.** `llama3.1:8b` got 18 of 18 on the Karachi checklist in trial run 41965540407; `qwen3:8b` and a larger model are being compared on harder documents.
 - **Rules gate on GitHub Models.** The `rules` CI job is disabled for zero spend. Later, switch `scripts/rules_gate.py` to GitHub Models (free tier via `GITHUB_TOKEN`) and re-enable it. Until then, `/code-review` against `docs/RULES.md` before every commit is the only rules check.
 
 

@@ -104,6 +104,12 @@ def test_number_found_in_the_document_is_accepted(ollama: _FakeOllama) -> None:
     )
 
 
+def test_reformatted_number_is_the_same_number(ollama: _FakeOllama) -> None:
+    item = {"text": "Insurance of € 30,000", "type": "mandatory", "condition": None}
+    ollama.content = json.dumps({"requirements": [item]})
+    assert extract_requirements("minimum cover € 30000", ollama.model)
+
+
 def test_reply_cut_off_by_the_length_limit_is_rejected(ollama: _FakeOllama) -> None:
     ollama.done_reason = "length"
     with pytest.raises(ExtractionError, match="cut off"):

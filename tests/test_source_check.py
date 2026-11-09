@@ -153,6 +153,16 @@ def test_pdf_change_after_an_angle_bracket_is_detected(site: _Site) -> None:
     assert check_sources({"a": baseline}, AS_OF)["a"].status == "changed"
 
 
+def test_changed_page_text_is_readable_without_navigation_or_markup(site: _Site) -> None:
+    site.pages["/a"] = (
+        200,
+        b"<nav>Home</nav><h2>Required</h2><ul><li>Passport</li><li>Photo</li></ul>"
+        b"<script>x()</script><footer>Imprint</footer>",
+    )
+    check = check_sources({"a": _source(f"{site.url}/a", "old")}, AS_OF)["a"]
+    assert check.text == "Required \nPassport \nPhoto"
+
+
 def test_run_saves_what_the_check_learned(site: _Site, tmp_path: Path) -> None:
     site.pages["/a"] = (200, PAGE.encode())
     save_sources({"a": _source(f"{site.url}/a", text_checksum(PAGE))}, tmp_path / "sources.yaml")

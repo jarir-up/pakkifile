@@ -1,0 +1,20 @@
+# Hand labels from the PDF's 18 numbered items. An item matches a label when it contains
+# every must_contain entry; whole numbers must match exactly.
+- {text: Application form, type: [mandatory], must_contain: [application, national visa]}
+- {text: Biometric picture, type: [mandatory], must_contain: [biometric]}
+- {text: Declaration under Section 54, type: [mandatory], must_contain: [declaration, "54"]}
+- {text: Declaration under Section 55, type: [mandatory], must_contain: [declaration, "55"]}
+- {text: Copies of pages 1 and 2 of the current passport, type: [mandatory], must_contain: [passport, "1", "2"]}
+- {text: Copies of previous visas, type: [mandatory], must_contain: [previous visas]}
+- {text: Information sheet for intending students, type: [mandatory], must_contain: [information sheet]}
+- {text: Admission letters, type: [mandatory], must_contain: [admission letter]}
+- {text: Blocked account confirmation for 10236 euro, type: [mandatory], must_contain: [blocked account, "10236"]}
+- {text: Curriculum Vitae, type: [mandatory], must_contain: [curriculum vitae]}
+- {text: Motivation letter, type: [mandatory], must_contain: [motivation]}
+- {text: O-level degree and grade sheet, type: [mandatory], must_contain: [o-level]}
+- {text: A-level degree and grade sheet, type: [conditional], must_contain: [a-level], condition_contains: applicable}
+- {text: Previous university studies, type: [conditional], must_contain: [university studies], condition_contains: applicable}
+- {text: Language certificates, type: [mandatory], must_contain: [ielts, goethe]}
+- {text: Refusal letters, type: [conditional], must_contain: [refusal], condition_contains: applicable}
+- {text: Proof of means to pay course fees, type: [conditional], must_contain: [financial means], condition_contains: fee}
+- {text: Further documentation, type: [optional], must_contain: [further documentation]}

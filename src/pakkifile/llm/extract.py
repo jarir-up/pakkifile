@@ -73,11 +73,16 @@ def _chat(model: ExtractionModel, body: dict[str, Any]) -> str:
     return content
 
 
+def _numbers(text: str) -> set[str]:
+    """Without separators, so "30,000" and "30000" are one number."""
+    return {re.sub(r"[.,]", "", number) for number in _NUMBER.findall(text)}
+
+
 def _check_numbers(items: tuple[ExtractedItem, ...], document: str) -> None:
     """A number the source doesn't contain came from the model (ADR-0017)."""
-    known = set(_NUMBER.findall(document))
+    known = _numbers(document)
     for item in items:
-        invented = set(_NUMBER.findall(f"{item.text} {item.condition or ''}")) - known
+        invented = _numbers(f"{item.text} {item.condition or ''}") - known
         if invented:
             raise ExtractionError(f"numbers not in the source: {sorted(invented)}: {item.text}")
 

@@ -58,6 +58,13 @@ requirements:
   citations:
   - source: de-missions-pk-tourist-visa-page
     section: Required documents
+- id: police-report-lost-passport
+  text: Police report, with English or German translation
+  type: conditional
+  condition: a previous passport has been lost
+  citations:
+  - source: de-missions-pk-tourist-visa-page
+    section: Required documents
 - id: previous-refusals
   text: Copies of any previous visa refusals
   type: conditional
