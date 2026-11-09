@@ -29,6 +29,7 @@ GATES = {
     "recall": Decimal("0.95"),
     "type_accuracy": Decimal("0.90"),
     "condition_accuracy": Decimal("0.75"),
+    "numbers_exact": Decimal("1"),
 }
 
 
@@ -49,20 +50,22 @@ class ExtractionResult:
     recall: Decimal
     type_accuracy: Decimal
     condition_accuracy: Decimal
+    numbers_exact: Decimal
     missing: tuple[str, ...]
     extra: tuple[str, ...]
 
 
 def _norm(text: str) -> str:
     """Lower case, no thousands separators, one spelling for school levels."""
-    without_separators = re.sub(r"(?<=\d)[.,](?=\d{3}\b)", "", text.lower())
-    spelled = re.sub(r"\b([oa]) level", r"\1-level", without_separators)
-    return " ".join(spelled.split())
+    # Capitals only: "at a level of B2" is not an A-level.
+    spelled = re.sub(r"\b([OA]) level", r"\1-level", text)
+    without_separators = re.sub(r"(?<=\d)[., ](?=\d{3}\b)", "", spelled.lower())
+    return " ".join(without_separators.split())
 
 
 def _contains(text: str, fact: str) -> bool:
     if fact.isdigit():  # "30000" must not match "300000".
-        return re.search(rf"(?<!\d){fact}(?!\d)", text) is not None
+        return re.search(rf"(?<!\d){fact}(?![.,]?\d)", text) is not None
     return fact in text
 
 
@@ -100,11 +103,13 @@ def score(items: Sequence[ExtractedItem], labels: Sequence[Label]) -> Extraction
         if (condition := labels[j].condition_contains)
     ]
     conditioned = sum(1 for item, want in with_condition if want in _norm(item.condition or ""))
+    numeric = [j for j in required if any(fact.isdigit() for fact in labels[j].must_contain)]
     return ExtractionResult(
         precision=_ratio(len(matched), len(items)) if items else Decimal(0),
         recall=_ratio(sum(1 for j in required if j in found), len(required)),
         type_accuracy=_ratio(typed, len(matched)),
         condition_accuracy=_ratio(conditioned, len(with_condition)),
+        numbers_exact=_ratio(sum(1 for j in numeric if j in found), len(numeric)),
         missing=tuple(labels[j].text for j in required if j not in found),
         extra=tuple(item.text for i, item in enumerate(items) if i not in matched),
     )

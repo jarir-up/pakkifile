@@ -1,13 +1,15 @@
 """Registry data files (ADR-0040, ADR-0043): sources once, one entry per application."""
 
+from collections.abc import Sequence
 from pathlib import Path
 
 import yaml
 
-from pakkifile.registry.model import Registry, RegistryEntry, Source
+from pakkifile.registry.model import ExtractedItem, Registry, RegistryEntry, Source
 
 SOURCES_FILE = "sources.yaml"
 ENTRIES_DIR = "entries"
+PROPOSALS_DIR = "proposals"
 
 
 def save_entry(entry: RegistryEntry, path: Path) -> None:
@@ -27,6 +29,18 @@ def load_sources(path: Path) -> dict[str, Source]:
 def save_sources(sources: dict[str, Source], path: Path) -> None:
     data = {k: v.model_dump(mode="json", exclude_defaults=True) for k, v in sorted(sources.items())}
     path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
+
+
+def save_proposal(source_id: str, items: Sequence[ExtractedItem], root: Path) -> None:
+    """What a model read from a changed source, for a maintainer to compare with the entries."""
+    proposal = {
+        "source": source_id,
+        "requirements": [i.model_dump(exclude_none=True) for i in items],
+    }
+    (root / PROPOSALS_DIR).mkdir(exist_ok=True)
+    (root / PROPOSALS_DIR / f"{source_id}.yaml").write_text(
+        yaml.safe_dump(proposal, sort_keys=False, allow_unicode=True)
+    )
 
 
 def load_registry(root: Path) -> Registry:

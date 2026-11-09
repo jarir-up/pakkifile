@@ -46,7 +46,7 @@ def test_perfect_extraction_scores_full_marks() -> None:
     assert passes(result)
 
 
-@pytest.mark.parametrize("amount", ["10,263 €", "102,360 €", "1,023 €"])
+@pytest.mark.parametrize("amount", ["10,263 €", "102,360 €", "1,023 €", "10,236.99 €"])
 def test_changed_amount_is_not_correct(amount: str) -> None:
     items = _perfect()
     items[1] = _item(f"Confirmation letter for the blocked account with an amount of {amount}")
@@ -55,7 +55,7 @@ def test_changed_amount_is_not_correct(amount: str) -> None:
     assert BLOCKED in result.missing
 
 
-@pytest.mark.parametrize("amount", ["€ 10236", "10.236 €", "10,236 €"])
+@pytest.mark.parametrize("amount", ["€ 10236", "10.236 €", "10,236 €", "10 236 €"])
 def test_amount_formats_count_as_the_same_number(amount: str) -> None:
     items = _perfect()
     items[1] = _item(f"Blocked account of {amount}")
@@ -65,6 +65,19 @@ def test_amount_formats_count_as_the_same_number(amount: str) -> None:
 def test_o_level_listed_twice_does_not_cover_a_level() -> None:
     items = _perfect()
     items[3] = _item("Copies of the O-level exam degree", "conditional", "x")
+    assert "A-level sheet" in score(items, SAMPLE).missing
+
+
+def test_changed_amount_lowers_numbers_exact() -> None:
+    items = _perfect()
+    items[1] = _item("Confirmation letter for the blocked account with an amount of 11,904 €")
+    assert score(items, SAMPLE).numbers_exact == Decimal(0)
+    assert score(_perfect(), SAMPLE).numbers_exact == Decimal(1)
+
+
+def test_a_level_of_something_is_not_an_a_level() -> None:
+    items = _perfect()
+    items[3] = _item("Language skills at a level of B2", "conditional", "if applicable")
     assert "A-level sheet" in score(items, SAMPLE).missing
 
 

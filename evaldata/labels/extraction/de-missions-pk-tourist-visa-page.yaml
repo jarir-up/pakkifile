@@ -8,11 +8,12 @@
 - {text: Proof of accommodation, type: [mandatory], must_contain: [accommodation]}
 - {text: Round-trip flight, type: [mandatory], must_contain: [flight]}
 - {text: Employment or university confirmation and NOC, type: [mandatory], must_contain: [employment]}
+- {text: NOC listed separately, type: [mandatory], must_contain: [noc], must_not_contain: [employment], required: false}
 - {text: Copies of pages 1 and 2 of the current passport, type: [mandatory], must_contain: [passport, "1", "2"]}
 - {text: Police report for a lost passport, type: [conditional], must_contain: [police report], condition_contains: lost}
 - {text: Previous visa refusals, type: [mandatory, conditional], must_contain: [refusal]}
 - {text: CNIC copy, type: [mandatory], must_contain: [cnic]}
-- {text: Family Registration Certificate, type: [mandatory], must_contain: [frc], must_not_contain: [marriage]}
+- {text: Family Registration Certificate, type: [mandatory], must_contain: [family registration], must_not_contain: [marriage]}
 - {text: Marriage certificate, type: [conditional], must_contain: [marriage], must_not_contain: [birth], condition_contains: applicable}
 - {text: Birth certificate, type: [conditional], must_contain: [birth], must_not_contain: [marriage], condition_contains: minor}
 - {text: List of children, type: [mandatory], must_contain: [children]}

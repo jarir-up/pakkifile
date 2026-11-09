@@ -14,7 +14,8 @@
 - {text: O-level degree and grade sheet, type: [mandatory], must_contain: [o-level]}
 - {text: A-level degree and grade sheet, type: [conditional], must_contain: [a-level], condition_contains: applicable}
 - {text: Previous university studies, type: [conditional], must_contain: [university studies], condition_contains: applicable}
-- {text: Language certificates, type: [mandatory], must_contain: [ielts, goethe]}
+- {text: IELTS or similar certificate, type: [mandatory], must_contain: [ielts]}
+- {text: Goethe certificate listed separately, type: [mandatory], must_contain: [goethe], must_not_contain: [ielts], required: false}
 - {text: Refusal letters, type: [conditional], must_contain: [refusal], condition_contains: applicable}
 - {text: Proof of means to pay course fees, type: [conditional], must_contain: [financial means], condition_contains: fee}
 - {text: Further documentation, type: [optional], must_contain: [further documentation]}

@@ -6,6 +6,7 @@ What's done lives in closed issues and merged PRs. This file holds only what the
 
 Q-1 to Q-15 settled 2026-10-30 (ADR-0012, 0030 to 0041; DESIGN.md; RULES R-22).
 
+- **ADR-0046 (Proposed): how the weekly job publishes.** Blocks merging the brief 03 PR. Includes allowing Actions to open pull requests in the repo settings.
 - **Rules gate on GitHub Models.** The `rules` CI job is disabled for zero spend. Later, switch `scripts/rules_gate.py` to GitHub Models (free tier via `GITHUB_TOKEN`) and re-enable it. Until then, `/code-review` against `docs/RULES.md` before every commit is the only rules check.
 
 

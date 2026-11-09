@@ -49,6 +49,10 @@ _Avoid_: Approve (reserved for the owner's decisions)
 The public, versioned collection of requirements across authorities.
 _Avoid_: Knowledge base, database
 
+**Proposal**:
+What a model read from a changed source, waiting for a maintainer to compare it with the registry.
+_Avoid_: Draft (reserved for letters)
+
 **Community story**:
 An applicant's report of what an authority asked, approved or refused. It adjusts confidence but never overrides an official source.
 
