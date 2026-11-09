@@ -1,24 +1,16 @@
 """Deterministic extraction of a checklist section's list items.
 
-Crude by design for the tracer: one list item is one requirement, and a
-trailing "(if ...)" makes it conditional. Model extraction replaces this in
-brief 03.
+Crude by design: one list item is one requirement, and a trailing "(if ...)"
+makes it conditional. It keeps the tracer running in CI without a model; model
+extraction lives in `llm`.
 """
 
 import re
-from dataclasses import dataclass
 from html.parser import HTMLParser
 
-from pakkifile.registry.model import RequirementType
+from pakkifile.registry.model import ExtractedItem
 
 _CONDITION = re.compile(r"^(?P<text>.+?)\s*\(if (?P<condition>[^)]+)\)$")
-
-
-@dataclass(frozen=True)
-class ExtractedItem:
-    text: str
-    type: RequirementType
-    condition: str | None
 
 
 class _SectionItems(HTMLParser):
@@ -54,7 +46,9 @@ def extract_section(html: str, heading: str) -> list[ExtractedItem]:
     for item in parser.items:
         match = _CONDITION.match(item)
         if match:
-            extracted.append(ExtractedItem(match["text"], "conditional", match["condition"]))
+            extracted.append(
+                ExtractedItem(text=match["text"], type="conditional", condition=match["condition"])
+            )
         else:
-            extracted.append(ExtractedItem(item, "mandatory", None))
+            extracted.append(ExtractedItem(text=item, type="mandatory", condition=None))
     return extracted
