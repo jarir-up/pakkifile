@@ -61,7 +61,7 @@ def test_karachi_tuition_needs_review_because_the_checklist_outranks_the_page() 
 
 
 def test_stale_karachi_blocked_account_still_auto_publishes_under_adr_0036() -> None:
-    # The approved rule ignores document age; logged for the owner in PROGRESS.md.
+    # ADR-0036 checks last verification only; document age lowers confidence instead.
     req = next(
         r for r in entry(KARACHI, "study").requirements if r.id == "blocked-account-confirmation"
     )

@@ -1,6 +1,7 @@
 services:
   db:
     image: pgvector/pgvector:0.8.0-pg17
+    restart: unless-stopped
     environment:
       POSTGRES_USER: pakkifile
       POSTGRES_PASSWORD: pakkifile
