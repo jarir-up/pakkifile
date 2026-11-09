@@ -2,6 +2,7 @@
 
 import hashlib
 import http.client
+import re
 import subprocess
 import tempfile
 import urllib.request
@@ -48,7 +49,7 @@ def readable_text(html: str) -> str:
     parser = _ReadableText()
     parser.feed(html)
     parser.close()
-    return "".join(parser.parts).strip()
+    return re.sub(r"\s*\n\s*", "\n", "".join(parser.parts)).strip()
 
 
 class _TextCollector(HTMLParser):

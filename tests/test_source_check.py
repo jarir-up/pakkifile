@@ -160,7 +160,7 @@ def test_changed_page_text_is_readable_without_navigation_or_markup(site: _Site)
         b"<script>x()</script><footer>Imprint</footer>",
     )
     check = check_sources({"a": _source(f"{site.url}/a", "old")}, AS_OF)["a"]
-    assert check.text == "Required \nPassport \nPhoto"
+    assert check.text == "Required\nPassport\nPhoto"
 
 
 def test_run_saves_what_the_check_learned(site: _Site, tmp_path: Path) -> None:
