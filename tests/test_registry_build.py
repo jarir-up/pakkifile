@@ -44,4 +44,6 @@ def test_published_registry_matches_its_source() -> None:
         verified=registry.sources[TRACER_SOURCE.source_id].last_verified,
     )
     assert entry in registry.entries
-    assert registry.sources[TRACER_SOURCE.source_id] == source
+    # A published checksum is for the live page, never the excerpt.
+    published = registry.sources[TRACER_SOURCE.source_id].model_copy(update={"checksum": None})
+    assert published == source.model_copy(update={"checksum": None})
