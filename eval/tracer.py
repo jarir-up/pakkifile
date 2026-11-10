@@ -92,7 +92,9 @@ def run(conn: Connection, out: Path) -> list[Result]:
         TRACER_SOURCE,
         verified=registry.sources[TRACER_SOURCE.source_id].last_verified,
     )
-    same = published == rebuilt and registry.sources[TRACER_SOURCE.source_id] == source
+    # A published checksum is for the live page, never the excerpt.
+    live = registry.sources[TRACER_SOURCE.source_id].model_copy(update={"checksum": None})
+    same = published == rebuilt and live == source.model_copy(update={"checksum": None})
     results.append(Result("registry", "published entry matches source", str(same), same))
 
     checklist = render_checklist(published, registry.sources, date.today())

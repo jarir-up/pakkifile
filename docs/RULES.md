@@ -27,7 +27,7 @@ How to keep this file useful:
 
 ## Project rules
 
-- **R-20** Never let a language model produce, compute or alter a figure. Every number shown to a user comes from a function in `figures`.
+- **R-20** Never let a language model produce, compute or alter a figure. Every number computed from applicant evidence comes from a function in `figures`; an amount a requirement quotes from an official source must appear in that source.
 - **R-21** Every requirement record carries its source document, section, URL, retrieval date and last-verified date.
 - **R-22** Code in `registry`, `sources` or the checklist site build never reads, stores, logs or transmits applicant documents or figures.
 - **R-23** No user-facing text states or implies approval or refusal odds, or suggests hiding, altering or working around a fact.

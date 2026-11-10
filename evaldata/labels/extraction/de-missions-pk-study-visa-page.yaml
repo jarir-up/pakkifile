@@ -1,0 +1,7 @@
+# Hand labels from the page's "Mandatory documents" section. required: false marks documents
+# the page mentions for a special case.
+- {text: Past degree certificates, type: [mandatory], must_contain: [degree certificates]}
+- {text: Degree transcripts, type: [mandatory], must_contain: [transcripts]}
+- {text: Proof of payment of tuition fees, type: [conditional], must_contain: [tuition], condition_contains: applicable}
+- {text: Acceptance of late arrival, type: [optional, conditional], must_contain: [late arrival], required: false}
+- {text: Enrollment letter for next semester, type: [optional, conditional], must_contain: [enrollment letter], required: false}

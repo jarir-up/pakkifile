@@ -42,6 +42,14 @@ class Citation(_Frozen):
     stance: Stance = "supports"
 
 
+class ExtractedItem(_Frozen):
+    """One requirement as an extractor read it, before it has an ID or citations."""
+
+    text: str
+    type: RequirementType
+    condition: str | None
+
+
 class Requirement(_Frozen):
     id: str
     text: str

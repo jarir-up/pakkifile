@@ -1,0 +1,108 @@
+name: registry
+
+# Weekly source check (ADR-0030, ADR-0036, ADR-0046).
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: bash # Adds pipefail, so a failure before `tee` fails the step.
+
+jobs:
+  refresh:
+    # Only from main: this job pushes to main.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      GH_TOKEN: ${{ github.token }}
+    services:
+      db:
+        image: pgvector/pgvector:0.8.0-pg17
+        env:
+          POSTGRES_USER: pakkifile
+          POSTGRES_PASSWORD: pakkifile
+          POSTGRES_DB: pakkifile
+        ports:
+          - "5433:5432"
+        options: --health-cmd "pg_isready -U pakkifile" --health-interval 2s --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.23"
+          python-version: "3.12"
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - run: uv sync --frozen
+      - name: Check every source
+        id: check
+        run: |
+          uv run --frozen python -m pakkifile.sources.check | tee "$RUNNER_TEMP/check.txt"
+          { echo '```'; cat "$RUNNER_TEMP/check.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          echo "changed=$(awk '$1 == "changed" {print $2}' "$RUNNER_TEMP/check.txt" | xargs)" >> "$GITHUB_OUTPUT"
+          echo "failed=$(awk '$1 == "failed" {print $2}' "$RUNNER_TEMP/check.txt" | xargs)" >> "$GITHUB_OUTPUT"
+      - run: ./scripts/check.sh
+      - name: Commit dates and first checksums
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add registry-data/sources.yaml
+          if ! git diff --cached --quiet; then
+            git commit -m "Update registry dates and first checksums"
+            git push origin HEAD:main
+          fi
+      - name: Is a proposal already waiting?
+        id: waiting
+        run: echo "open=$(gh pr list --head registry/proposals --state open --json number --jq length)" >> "$GITHUB_OUTPUT"
+      - if: steps.check.outputs.changed != '' && steps.waiting.outputs.open == '0'
+        uses: ./.github/actions/ollama
+      - name: Propose requirements for changed sources
+        id: propose
+        if: steps.check.outputs.changed != '' && steps.waiting.outputs.open == '0'
+        continue-on-error: true
+        env:
+          CHANGED: ${{ steps.check.outputs.changed }}
+        run: |
+          # shellcheck disable=SC2086 # Source IDs are one word each.
+          uv run --frozen python -m pakkifile.sources.propose $CHANGED
+      - name: Score the model
+        if: steps.check.outputs.changed != '' && steps.waiting.outputs.open == '0'
+        continue-on-error: true
+        run: uv run --frozen python -m eval.extraction | tee "$RUNNER_TEMP/evaluation.txt"
+      - name: Open the pull request
+        if: steps.check.outputs.changed != '' && steps.waiting.outputs.open == '0'
+        env:
+          CHANGED: ${{ steps.check.outputs.changed }}
+        run: |
+          ./scripts/check.sh
+          git add registry-data
+          git diff --cached --quiet && exit 0
+          git switch -C registry/proposals
+          git commit -m "Propose requirements for changed sources: $CHANGED"
+          git push --force origin registry/proposals
+          {
+            echo "Sources changed: $CHANGED"
+            echo
+            echo "Compare \`registry-data/proposals/\` with the entries, update them, and delete the proposals."
+            echo "Checks passed in [this run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
+            echo
+            echo "The hand labels describe the old text, so a changed source may fail its evaluation."
+            echo '```'
+            cat "$RUNNER_TEMP/evaluation.txt" || true
+            echo '```'
+          } > "$RUNNER_TEMP/body.md"
+          gh pr create --base main --head registry/proposals \
+            --title "Registry: changed sources" --body-file "$RUNNER_TEMP/body.md"
+      - name: Fail visibly if a source could not be handled
+        if: steps.check.outputs.failed != '' || steps.propose.outcome == 'failure'
+        env:
+          FAILED: ${{ steps.check.outputs.failed }}
+        run: |
+          echo "Could not fetch: $FAILED. See the proposal step for extraction failures."
+          exit 1

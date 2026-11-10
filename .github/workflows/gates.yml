@@ -24,6 +24,7 @@ jobs:
         with:
           version: "0.12.23"
           python-version: "3.12"
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
       - run: uv sync --frozen
       - run: ./scripts/check.sh
 
