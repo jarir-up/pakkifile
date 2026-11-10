@@ -4,18 +4,20 @@ Columns are found from the header line's positions, so a credit is never read as
 A password, when given, is passed to pdftotext and never stored (ADR-0053).
 """
 
+import hashlib
 import re
 import subprocess
 from dataclasses import dataclass, replace
 from datetime import date, datetime
 from pathlib import Path
 
-from sqlalchemy import Connection, insert
+from sqlalchemy import Connection, insert, select
 
 from pakkifile.figures.money import net_minor, parse_minor
 from pakkifile.figures.reconcile import balance_gaps
+from pakkifile.vault.dedupe import IncomingRow, StoredRow, sort_rows
 from pakkifile.vault.ingest import store_evidence_item
-from pakkifile.vault.schema import statement, statement_row
+from pakkifile.vault.schema import evidence_item, statement, statement_row
 
 # The header is a grid: a line of these labels, then their values on the next line.
 _LABELS = (
@@ -187,9 +189,21 @@ def parse_meezan(text: str) -> MeezanStatement:
 def ingest_meezan_pdf(
     conn: Connection, person_id: int, path: Path, password: str | None = None
 ) -> int:
-    """Store a statement and its rows for one person, all or nothing."""
+    """Store a statement and its new rows for one person, all or nothing (ADR-0028).
+
+    A file this person already stored returns its existing evidence item.
+    """
+    sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+    existing = conn.scalar(
+        select(evidence_item.c.id).where(
+            evidence_item.c.person_id == person_id, evidence_item.c.sha256 == sha256
+        )
+    )
+    if existing is not None:
+        return int(existing)
     parsed = parse_meezan(pdf_text(path, password))
     with conn.begin_nested():
+        stored = _stored_rows(conn, person_id, parsed)
         item_id = store_evidence_item(conn, person_id, path)
         conn.execute(
             insert(statement).values(
@@ -205,21 +219,55 @@ def ingest_meezan_pdf(
                 closing_minor=parsed.closing_minor,
             )
         )
-        if parsed.rows:  # a dormant month has none
+        new, _, possible = sort_rows(
+            [
+                IncomingRow(
+                    r.booked,
+                    r.description,
+                    net_minor(r.credit_minor, r.debit_minor),
+                    r.row_no,
+                    r.balance_minor,
+                )
+                for r in parsed.rows
+            ],
+            stored,
+        )
+        flagged = {row.row_no: stored_id for row, stored_id in possible}
+        if new:  # a dormant month, or a statement fully covered by earlier ones, has none
             conn.execute(
                 insert(statement_row),
                 [
                     {
                         "person_id": person_id,
                         "evidence_item_id": item_id,
-                        "row_no": r.row_no,
-                        "date": r.booked,
-                        "description": r.description,
-                        "amount_minor": net_minor(r.credit_minor, r.debit_minor),
+                        "row_no": row.row_no,
+                        "date": row.booked,
+                        "description": row.description,
+                        "amount_minor": row.amount_minor,
                         "currency": parsed.currency,
-                        "balance_minor": r.balance_minor,
+                        "balance_minor": row.balance_minor,
+                        "possible_duplicate_of": flagged.get(row.row_no),
                     }
-                    for r in parsed.rows
+                    for row in new
                 ],
             )
     return item_id
+
+
+def _stored_rows(conn: Connection, person_id: int, parsed: MeezanStatement) -> list[StoredRow]:
+    """This person's rows already stored for the same account within the statement's period."""
+    query = (
+        select(
+            statement_row.c.id,
+            statement_row.c.date,
+            statement_row.c.description,
+            statement_row.c.amount_minor,
+        )
+        .join(statement, statement.c.evidence_item_id == statement_row.c.evidence_item_id)
+        .where(
+            statement_row.c.person_id == person_id,
+            statement.c.account_number == parsed.account_number,
+            statement_row.c.date.between(parsed.period_from, parsed.period_to),
+        )
+    )
+    return [StoredRow(*row) for row in conn.execute(query)]

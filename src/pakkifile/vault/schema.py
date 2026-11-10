@@ -58,4 +58,6 @@ statement_row = Table(
     Column("amount_minor", BigInteger, nullable=False),
     Column("currency", String(3), nullable=False),
     Column("balance_minor", BigInteger),
+    # Kept but flagged: same account, day and amount as this row, described differently.
+    Column("possible_duplicate_of", ForeignKey("statement_row.id")),
 )

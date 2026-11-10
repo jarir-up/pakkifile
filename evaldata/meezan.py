@@ -62,10 +62,20 @@ def iban(number: str) -> str:
     return "PK00SYNM" + "".join(ch for ch in number if ch.isdigit()).rjust(16, "0")
 
 
-def write_meezan_statement(persona: Persona, out_dir: Path, password: str | None = None) -> Path:
+def write_meezan_statement(
+    persona: Persona,
+    out_dir: Path,
+    password: str | None = None,
+    start: date | None = None,
+    end: date | None = None,
+) -> Path:
+    """The statement for the persona's whole period, or for the window `start` to `end`."""
     account = persona.accounts["meezan"]
-    rows = [t for t in transactions(persona) if t.account == "meezan"]
-    balance = account.opening
+    start, end = start or persona.period_from, end or persona.period_to
+    every = [t for t in transactions(persona) if t.account == "meezan"]
+    rows = [t for t in every if start <= t.date <= end]
+    opening = account.opening + sum(t.amount_minor for t in every if t.date < start)
+    balance = opening
     code = account.currency
     lines = []
     for t in rows:
@@ -93,11 +103,11 @@ def write_meezan_statement(persona: Persona, out_dir: Path, password: str | None
         ),
         *_grid(
             ("Currency", f"{CURRENCY_NAMES.get(code, code)}({code})"),
-            ("From Date", _date(persona.period_from)),
-            ("To Date", _date(persona.period_to)),
+            ("From Date", _date(start)),
+            ("To Date", _date(end)),
         ),
         *_grid(
-            ("Opening Balance", _money(account.opening, code)),
+            ("Opening Balance", _money(opening, code)),
             ("Closing Balance", _money(balance, code)),
             ("Address", ADDRESS),
         ),
