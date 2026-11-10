@@ -59,3 +59,16 @@ def test_templates_use_only_design_tokens() -> None:
         if path.name == "tokens.html":
             continue
         assert not re.search(r"#[0-9a-fA-F]{3,6}\b|\d+px", path.read_text()), path.name
+
+
+def test_page_links_to_the_full_list_when_the_source_holds_only_part() -> None:
+    html = render_checklist(ENTRY, REGISTRY.sources, AS_OF)
+    notice = html.split('class="full-list"')[1].split("</p>")[0]
+    assert 'href="https://digital.diplo.de/studium"' in notice
+    assert "Consular Services Portal" in notice
+    assert html.index('class="full-list"') < html.index("<table>")
+
+
+def test_page_without_a_full_list_shows_no_notice() -> None:
+    whole = ENTRY.model_copy(update={"full_list": None})
+    assert 'class="full-list"' not in render_checklist(whole, REGISTRY.sources, AS_OF)

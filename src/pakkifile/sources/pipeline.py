@@ -60,6 +60,17 @@ def same_source(published: Source, built: Source) -> bool:
     return published.model_dump(exclude=_KEPT_BY_JOB) == built.model_dump(exclude=_KEPT_BY_JOB)
 
 
+# A maintainer adds these by hand; the source never states them.
+_KEPT_BY_MAINTAINER = {"full_list"}
+
+
+def same_entry(published: RegistryEntry, built: RegistryEntry) -> bool:
+    """Whether a built entry matches the published one, ignoring what a maintainer adds."""
+    return published.model_dump(exclude=_KEPT_BY_MAINTAINER) == built.model_dump(
+        exclude=_KEPT_BY_MAINTAINER
+    )
+
+
 def build_entry(html: str, spec: SourceSpec, verified: date) -> tuple[RegistryEntry, Source]:
     """Return the entry and the source it cites, to be stored under `spec.source_id`."""
     source = Source(

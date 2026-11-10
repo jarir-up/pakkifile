@@ -5,7 +5,7 @@ import yaml
 
 from pakkifile.registry.files import load_registry
 from pakkifile.registry.model import RegistryEntry, Source
-from pakkifile.sources.pipeline import TRACER_SOURCE, build_entry, same_source
+from pakkifile.sources.pipeline import TRACER_SOURCE, build_entry, same_entry, same_source
 
 EXCERPT = Path("registry-data/sources/de-missions-pk-study-visa.html")
 LABELS = Path("evaldata/labels/de-islamabad-study-d.yaml")
@@ -39,7 +39,7 @@ def test_every_requirement_cites_the_page_section() -> None:
 def test_published_registry_matches_its_source() -> None:
     registry = load_registry(Path("registry-data"))
     entry, source = build_entry(EXCERPT.read_text(), TRACER_SOURCE, verified=VERIFIED)
-    assert entry in registry.entries
+    assert any(same_entry(published, entry) for published in registry.entries)
     assert same_source(registry.sources[TRACER_SOURCE.source_id], source)
 
 

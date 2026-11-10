@@ -7,6 +7,9 @@ application:
   purpose: study
   visa_category: D
 applicant_profile: Self-funded freelancer
+full_list:
+  name: Consular Services Portal
+  url: https://digital.diplo.de/studium
 requirements:
 - id: past-degree-certificates-school-bachelor-or-past-master-degrees
   text: Past degree certificates (school, bachelor or past master degrees)
