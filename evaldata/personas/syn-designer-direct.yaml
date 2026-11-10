@@ -1,0 +1,23 @@
+# Draft for the owner (ADR-0050). Synthetic: every name, number and account is invented.
+id: syn-designer-direct
+label: Designer paid directly by foreign clients
+applicant_profile: Self-funded freelancer
+target: German Embassy Islamabad, Tourist visa (C)
+period_from: 2026-04-01
+months: 6
+usd_pkr: "280.00"
+accounts:
+  meezan: {currency: PKR, opening: "310000.00", holder: SYN SANA IQBAL, number: "SYN-0202-0207731"}
+monthly:
+  - {account: meezan, day: 4, class: remittance_in, description: HOME REMITTANCE SYN FJORD DESIGN AS PRC, amount: "420000.00", only_months: [0, 1, 2, 3, 4]}
+  - {account: meezan, day: 16, class: remittance_in, description: HOME REMITTANCE SYN J WHITFIELD PRC, amount: "280000.00", only_months: [1, 3, 5]}
+  - {account: meezan, day: 6, class: spending, description: IBFT kiraya, amount: "-80000.00"}
+  - {account: meezan, day: 12, class: spending, description: gas ka bill SSGC, amount: "-6500.00"}
+  - {account: meezan, day: 15, class: spending, description: school fees bachon ki, amount: "-30000.00"}
+  - {account: meezan, day: 28, class: tax, description: WITHHOLDING TAX 236P, amount: "-1200.00"}
+once:
+  - {account: meezan, booked: 2026-09-04, class: remittance_in, description: INWARD SWIFT SYN FJORD DESIGN AS, amount: "420000.00"}
+seeds:
+  - {kind: M3, what: "SYN KESTREL STUDIO LTD's payments arrive from its director, SYN J WHITFIELD, not from the company named on its invoices."}
+  - {kind: M1, what: "The September SYN FJORD DESIGN AS payment arrives as an inward SWIFT with no PRC."}
+  - {kind: M5, what: "The FBR return for tax year 2026 declares PKR 1,200,000 foreign income, less than the PKR 1,540,000 the April to June 2026 credits alone carry."}

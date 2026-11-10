@@ -38,7 +38,7 @@ jobs:
         with:
           version: "0.12.23"
           python-version: "3.12"
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils qpdf
       - run: uv sync --frozen
       - name: Check every source
         id: check
