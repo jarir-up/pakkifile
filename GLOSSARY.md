@@ -35,7 +35,7 @@ A requirement's reference to one source: which source, which section, and whethe
 _Avoid_: Reference, link
 
 **Source authority**:
-The rank of a source: official checklist above consulate page above service-provider page above agent above community story.
+The rank of a source: official checklist above consulate page above portal walk above service-provider page above agent above community story.
 
 **Confidence**:
 A computed measure of how sure the registry is about a requirement, from source authority, recency and agreement across sources.
@@ -52,6 +52,9 @@ _Avoid_: Knowledge base, database
 **Proposal**:
 What a model read from a changed source, waiting for a maintainer to compare it with the registry.
 _Avoid_: Draft (reserved for letters)
+
+**Portal walk**:
+A contributor's record of the list an authority's interactive portal shows for one applicant profile, with the portal's own printout as evidence.
 
 **Community story**:
 An applicant's report of what an authority asked, approved or refused. It adjusts confidence but never overrides an official source.
