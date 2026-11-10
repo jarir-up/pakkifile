@@ -4,7 +4,6 @@ Columns are found from the header line's positions, so a credit is never read as
 A password, when given, is passed to pdftotext and never stored (ADR-0053).
 """
 
-import hashlib
 import re
 import subprocess
 from dataclasses import dataclass, replace
@@ -15,9 +14,9 @@ from sqlalchemy import Connection, insert, select
 
 from pakkifile.figures.money import net_minor, parse_minor
 from pakkifile.figures.reconcile import balance_gaps
-from pakkifile.vault.dedupe import IncomingRow, StoredRow, sort_rows
-from pakkifile.vault.ingest import store_evidence_item
-from pakkifile.vault.schema import evidence_item, statement, statement_row
+from pakkifile.vault.dedupe import IncomingRow, StoredRow, fingerprint, sort_rows
+from pakkifile.vault.ingest import file_sha256, store_evidence_item, stored_evidence_item
+from pakkifile.vault.schema import statement, statement_row
 
 # The header is a grid: a line of these labels, then their values on the next line.
 _LABELS = (
@@ -193,18 +192,13 @@ def ingest_meezan_pdf(
 
     A file this person already stored returns its existing evidence item.
     """
-    sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
-    existing = conn.scalar(
-        select(evidence_item.c.id).where(
-            evidence_item.c.person_id == person_id, evidence_item.c.sha256 == sha256
-        )
-    )
-    if existing is not None:
-        return int(existing)
+    sha256 = file_sha256(path)
+    if (existing := stored_evidence_item(conn, person_id, sha256)) is not None:
+        return existing
     parsed = parse_meezan(pdf_text(path, password))
     with conn.begin_nested():
         stored = _stored_rows(conn, person_id, parsed)
-        item_id = store_evidence_item(conn, person_id, path)
+        item_id = store_evidence_item(conn, person_id, path, sha256)
         conn.execute(
             insert(statement).values(
                 person_id=person_id,
@@ -247,6 +241,7 @@ def ingest_meezan_pdf(
                         "currency": parsed.currency,
                         "balance_minor": row.balance_minor,
                         "possible_duplicate_of": flagged.get(row.row_no),
+                        "fingerprint": fingerprint(parsed.account_number, row),
                     }
                     for row in new
                 ],

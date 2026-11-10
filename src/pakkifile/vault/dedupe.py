@@ -5,6 +5,7 @@ same day for the same amount but described differently might be one, so it is ke
 Identical rows inside one statement are separate transactions (two ATM withdrawals in a day).
 """
 
+import hashlib
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -30,6 +31,16 @@ class StoredRow:
 
 def _key(row: IncomingRow | StoredRow) -> tuple[date, str, int]:
     return row.booked, " ".join(row.description.upper().split()), row.amount_minor
+
+
+def fingerprint(account_number: str, row: IncomingRow) -> str:
+    """A row's stable key when the statement gives no transaction ID (ADR-0028).
+
+    Includes the row number, so identical rows in one statement keep distinct keys.
+    """
+    booked, description, amount = _key(row)
+    raw = f"{account_number}|{booked.isoformat()}|{description}|{amount}|{row.row_no}"
+    return hashlib.sha256(raw.encode()).hexdigest()
 
 
 def sort_rows(

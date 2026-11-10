@@ -60,4 +60,5 @@ statement_row = Table(
     Column("balance_minor", BigInteger),
     # Kept but flagged: same account, day and amount as this row, described differently.
     Column("possible_duplicate_of", ForeignKey("statement_row.id")),
+    Column("fingerprint", String),  # stable key when there is no transaction ID (ADR-0028)
 )

@@ -5,8 +5,9 @@ from sqlalchemy import Connection, func, select
 
 from evaldata.meezan import write_meezan_statement
 from evaldata.persona import load_personas, transactions
+from evaldata.statement import TRACER_FACTS, write_statement
 from pakkifile.vault.dedupe import IncomingRow, StoredRow, sort_rows
-from pakkifile.vault.ingest import add_person
+from pakkifile.vault.ingest import add_person, ingest_statement_csv
 from pakkifile.vault.meezan import ingest_meezan_pdf
 from pakkifile.vault.schema import evidence_item, statement_row
 
@@ -82,3 +83,48 @@ def test_a_statement_with_no_transactions_is_stored(db: Connection, tmp_path: Pa
     quiet = write_meezan_statement(DEV, tmp_path, start=date(2026, 4, 1), end=date(2026, 4, 2))
     item = ingest_meezan_pdf(db, add_person(db, "applicant"), quiet)
     assert db.scalar(select(func.count()).where(statement_row.c.evidence_item_id == item)) == 0
+
+
+def test_repeats_across_statements_consume_one_stored_match_each() -> None:
+    stored = [StoredRow(i, ATM.booked, ATM.description, ATM.amount_minor) for i in (1, 2)]
+    new, duplicates, _ = sort_rows([ATM, ATM, ATM], stored)
+    assert (len(new), len(duplicates)) == (1, 2)
+
+
+def test_a_possible_duplicate_is_stored_and_points_at_its_match(
+    db: Connection, tmp_path: Path
+) -> None:
+    person = add_person(db, "applicant")
+    ingest_meezan_pdf(db, person, write_meezan_statement(DEV, tmp_path / "a"))
+    renamed = DEV.model_copy(
+        update={
+            "once": tuple(
+                line.model_copy(update={"description": "CASH DEP BRANCH 0101"})
+                if line.description == "CASH DEPOSIT"
+                else line
+                for line in DEV.once
+            )
+        }
+    )
+    ingest_meezan_pdf(db, person, write_meezan_statement(renamed, tmp_path / "b"))
+    flagged = db.execute(
+        select(statement_row.c.description, statement_row.c.possible_duplicate_of).where(
+            statement_row.c.person_id == person, statement_row.c.possible_duplicate_of.is_not(None)
+        )
+    ).all()
+    assert [f.description for f in flagged] == ["CASH DEP BRANCH 0101"]
+
+
+def test_the_same_csv_is_ingested_once(db: Connection, tmp_path: Path) -> None:
+    person = add_person(db, "applicant")
+    path = write_statement(TRACER_FACTS, seed=7, out_dir=tmp_path)
+    assert ingest_statement_csv(db, person, path) == ingest_statement_csv(db, person, path)
+
+
+def test_every_stored_row_has_a_distinct_fingerprint(db: Connection, tmp_path: Path) -> None:
+    person = add_person(db, "applicant")
+    ingest_meezan_pdf(db, person, write_meezan_statement(DEV, tmp_path))
+    keys = db.scalars(
+        select(statement_row.c.fingerprint).where(statement_row.c.person_id == person)
+    ).all()
+    assert all(keys) and len(set(keys)) == len(keys)
