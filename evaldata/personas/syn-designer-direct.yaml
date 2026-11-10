@@ -18,6 +18,11 @@ monthly:
 once:
   - {account: meezan, booked: 2026-09-04, class: remittance_in, description: INWARD SWIFT SYN FJORD DESIGN AS, amount: "420000.00"}
 seeds:
-  - {kind: M3, what: "SYN KESTREL STUDIO LTD's payments arrive from its director, SYN J WHITFIELD, not from the company named on its invoices."}
+  - {kind: M5, what: "SYN KESTREL STUDIO LTD's payments arrive from its director, SYN J WHITFIELD, not from the company named on its invoices."}
   - {kind: M1, what: "The September SYN FJORD DESIGN AS payment arrives as an inward SWIFT with no PRC."}
   - {kind: M5, what: "The FBR return for tax year 2026 declares PKR 1,200,000 foreign income, less than the PKR 1,540,000 the April to June 2026 credits alone carry."}
+expected:
+  closing: {meezan: "2963800.00"}
+  remittances_in_pkr: "3360000.00"
+  sponsor_transfers_pkr: "0"
+  largest_unattributed_credit_pkr: null

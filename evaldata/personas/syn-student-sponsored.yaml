@@ -18,9 +18,14 @@ monthly:
   - {account: meezan, day: 13, class: remittance_in, description: HOME REMITTANCE PAYONEER INC PRC, amounts: ["70000.00", "84000.00", "70000.00", "84000.00", "84000.00", "70000.00"]}
   - {account: meezan, day: 20, class: spending, description: kitaabein aur stationery, amount: "-8000.00"}
 once:
-  - {account: meezan, booked: 2026-08-20, class: sponsor_transfer, description: IBFT FROM SYN TARIQ MAHMOOD, amount: "3000000.00"}
-  - {account: meezan, booked: 2026-08-25, class: own_transfer, description: OUTWARD REMITTANCE SYN BLOCKED ACCOUNT, amount: "-3000000.00"}
-  - {account: meezan, booked: 2026-09-15, class: spending, description: IBFT SYN HOCHSCHULE TUITION FEE, amount: "-1000000.00"}
+  - {account: meezan, booked: 2026-08-20, class: sponsor_transfer, description: IBFT FROM SYN TARIQ MAHMOOD, amount: "4000000.00"}
+  - {account: meezan, booked: 2026-08-25, class: own_transfer, description: OUTWARD REMITTANCE SYN BLOCKED ACCOUNT, amount: "-4000000.00"}
+  - {account: meezan, booked: 2026-09-15, class: spending, description: OUTWARD REMITTANCE SYN HOCHSCHULE TUITION FEE, amount: "-1000000.00"}
 seeds:
-  - {kind: M2, what: "The sponsor's PKR 3,000,000 lump sum on 2026-08-20 has no source-of-funds evidence."}
-  - {kind: M6, what: "The applicant keeps freelancing for foreign clients while applying for a study visa."}
+  - {kind: M2, what: "The sponsor's PKR 4,000,000 lump sum on 2026-08-20 has no source-of-funds evidence."}
+  - {kind: M6, what: "The applicant plans to keep freelancing for foreign clients from Germany, which may conflict with the study visa's work conditions."}
+expected:
+  closing: {payoneer: "240.00", meezan: "137000.00"}
+  remittances_in_pkr: "462000.00"
+  sponsor_transfers_pkr: "4900000.00"
+  largest_unattributed_credit_pkr: null

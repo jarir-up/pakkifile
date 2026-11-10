@@ -7,10 +7,10 @@ against. Amounts are written in major units for editing and held as integer mino
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
 import yaml
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 PERSONAS = Path("evaldata/personas")
 
@@ -20,7 +20,7 @@ MismatchKind = Literal["M1", "M2", "M3", "M4", "M5", "M6"]
 RowClass = Literal[
     "client_payment",  # a counterparty pays the applicant on a platform
     "platform_withdrawal",  # money leaves the platform for the applicant's bank
-    "remittance_in",  # a foreign credit reaches the bank, with a PRC
+    "remittance_in",  # a foreign credit reaches the bank
     "sponsor_transfer",
     "cash_deposit",
     "own_transfer",
@@ -52,27 +52,47 @@ class Account(_Frozen):
     number: str
 
 
-class Line(_Frozen):
+class MonthlyLine(_Frozen):
+    """A transaction on the same day each month: one amount, or one per month."""
+
     account: AccountName
     description: str
-    amount: Minor | None = None
-    amounts: tuple[Minor, ...] | None = None  # one per month, when it varies
-    day: int | None = None  # monthly lines
-    only_months: tuple[int, ...] | None = None  # monthly lines that skip some months
-    booked: date | None = None  # one-off lines
     row_class: RowClass = Field(alias="class")
-    external_id: str | None = None
+    day: int
+    amount: Minor | None = None
+    amounts: tuple[Minor, ...] | None = None
+    only_months: tuple[int, ...] | None = None  # month offsets, when it skips some
+
+    @model_validator(mode="after")
+    def _one_amount(self) -> Self:
+        if (self.amount is None) == (self.amounts is None):
+            raise ValueError(f"{self.description}: give amount or amounts, not both")
+        return self
 
     def amount_in(self, month: int) -> int:
-        if self.amounts is not None:
-            return self.amounts[month]
-        assert self.amount is not None
-        return self.amount
+        return self.amounts[month] if self.amounts is not None else self.amount or 0
+
+
+class OnceLine(_Frozen):
+    account: AccountName
+    description: str
+    row_class: RowClass = Field(alias="class")
+    booked: date
+    amount: Minor
 
 
 class Seed(_Frozen):
     kind: MismatchKind
     what: str
+
+
+class Expected(_Frozen):
+    """Figures a correct pipeline must find, worked out from the lines above by hand."""
+
+    closing: dict[AccountName, Minor]
+    remittances_in_pkr: Minor
+    sponsor_transfers_pkr: Minor
+    largest_unattributed_credit_pkr: Minor | None
 
 
 class Persona(_Frozen):
@@ -84,9 +104,17 @@ class Persona(_Frozen):
     months: int
     accounts: dict[AccountName, Account]
     usd_pkr: Decimal
-    monthly: tuple[Line, ...]
-    once: tuple[Line, ...] = ()
+    monthly: tuple[MonthlyLine, ...]
+    once: tuple[OnceLine, ...] = ()
     seeds: tuple[Seed, ...]
+    expected: Expected
+
+    @model_validator(mode="after")
+    def _months_fit(self) -> Self:
+        for line in self.monthly:
+            if line.amounts is not None and len(line.amounts) != self.months:
+                raise ValueError(f"{line.description}: needs {self.months} amounts")
+        return self
 
 
 class Transaction(_Frozen):
@@ -99,27 +127,21 @@ class Transaction(_Frozen):
 
 def transactions(persona: Persona) -> list[Transaction]:
     """Every dated transaction in the persona's period, in booking order."""
-    out = [
-        Transaction(
-            account=line.account,
-            date=_month(persona.period_from, month).replace(day=line.day or 1),
-            description=line.description,
-            amount_minor=line.amount_in(month),
-            row_class=line.row_class,
-        )
+    dated = [
+        (line, _month(persona.period_from, month).replace(day=line.day), line.amount_in(month))
         for line in persona.monthly
         for month in range(persona.months)
         if line.only_months is None or month in line.only_months
-    ]
-    out += [
+    ] + [(line, line.booked, line.amount) for line in persona.once]
+    out = [
         Transaction(
             account=line.account,
-            date=line.booked or persona.period_from,
+            date=day,
             description=line.description,
-            amount_minor=line.amount_in(0),
+            amount_minor=amount,
             row_class=line.row_class,
         )
-        for line in persona.once
+        for line, day, amount in dated
     ]
     return sorted(out, key=lambda t: (t.account, t.date, -t.amount_minor, t.description))
 

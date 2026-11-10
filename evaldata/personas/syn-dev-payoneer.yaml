@@ -24,3 +24,8 @@ seeds:
   - {kind: M2, what: "A PKR 350,000 cash deposit on 2026-08-14 has no identified sender."}
   - {kind: M4, what: "The tourist checklist asks for salary slips; this applicant has no employer."}
   - {kind: M5, what: "Income arrives only as Upwork payments from SYN NORTHWIND LLC, with no contract or invoices."}
+expected:
+  closing: {payoneer: "1060.05", meezan: "3125100.00"}
+  remittances_in_pkr: "3458000.00"
+  sponsor_transfers_pkr: "0"
+  largest_unattributed_credit_pkr: "350000.00"
