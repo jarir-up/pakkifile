@@ -1,0 +1,31 @@
+# Draft for the owner (ADR-0050). Synthetic: every name, number and account is invented.
+id: syn-student-sponsored
+label: Student with a sponsoring parent and small freelance income
+applicant_profile: Sponsored student
+target: German Embassy Islamabad, Study visa (D)
+period_from: 2026-04-01
+months: 6
+usd_pkr: "280.00"
+accounts:
+  payoneer: {currency: USD, opening: "120.00", holder: SYN HAMZA TARIQ, number: "SYN-PAY-7710245"}
+  meezan: {currency: PKR, opening: "45000.00", holder: SYN HAMZA TARIQ, number: "SYN-0303-0309982"}
+monthly:
+  - {account: meezan, day: 1, class: sponsor_transfer, description: IBFT FROM SYN TARIQ MAHMOOD abbu, amount: "150000.00"}
+  - {account: meezan, day: 5, class: spending, description: hostel kiraya, amount: "-35000.00"}
+  - {account: meezan, day: 9, class: spending, description: mobile load JAZZ, amount: "-2000.00"}
+  - {account: payoneer, day: 10, class: client_payment, description: Payment from SYN PIXELWORKS via Fiverr, amounts: ["280.00", "310.00", "260.00", "330.00", "300.00", "290.00"]}
+  - {account: payoneer, day: 12, class: platform_withdrawal, description: Withdrawal to MEEZAN BANK ****9982, amounts: ["-250.00", "-300.00", "-250.00", "-300.00", "-300.00", "-250.00"]}
+  - {account: meezan, day: 13, class: remittance_in, description: HOME REMITTANCE PAYONEER INC PRC, amounts: ["70000.00", "84000.00", "70000.00", "84000.00", "84000.00", "70000.00"]}
+  - {account: meezan, day: 20, class: spending, description: kitaabein aur stationery, amount: "-8000.00"}
+once:
+  - {account: meezan, booked: 2026-08-20, class: sponsor_transfer, description: IBFT FROM SYN TARIQ MAHMOOD, amount: "4000000.00"}
+  - {account: meezan, booked: 2026-08-25, class: own_transfer, description: OUTWARD REMITTANCE SYN BLOCKED ACCOUNT, amount: "-4000000.00"}
+  - {account: meezan, booked: 2026-09-15, class: spending, description: OUTWARD REMITTANCE SYN HOCHSCHULE TUITION FEE, amount: "-1000000.00"}
+seeds:
+  - {kind: M2, what: "The sponsor's PKR 4,000,000 lump sum on 2026-08-20 has no source-of-funds evidence."}
+  - {kind: M6, what: "The applicant plans to keep freelancing for foreign clients from Germany, which may conflict with the study visa's work conditions."}
+expected:
+  closing: {payoneer: "240.00", meezan: "137000.00"}
+  remittances_in_pkr: "462000.00"
+  sponsor_transfers_pkr: "4900000.00"
+  largest_unattributed_credit_pkr: null

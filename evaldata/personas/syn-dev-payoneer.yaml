@@ -1,0 +1,31 @@
+# Draft for the owner (ADR-0050). Synthetic: every name, number and account is invented.
+id: syn-dev-payoneer
+label: Upwork developer paid through Payoneer
+applicant_profile: Self-funded freelancer
+target: German Embassy Islamabad, Tourist visa (C)
+period_from: 2026-04-01
+months: 6
+usd_pkr: "280.00"
+accounts:
+  payoneer: {currency: USD, opening: "640.00", holder: SYN AHMED RAZA, number: "SYN-PAY-5531902"}
+  meezan: {currency: PKR, opening: "185000.00", holder: SYN AHMED RAZA, number: "SYN-0101-0104417"}
+monthly:
+  - {account: payoneer, day: 3, class: client_payment, description: Payment from SYN NORTHWIND LLC via Upwork, amounts: ["2100.00", "1850.00", "2400.00", "2250.00", "1900.00", "2300.00"]}
+  - {account: payoneer, day: 6, class: platform_withdrawal, description: Withdrawal to MEEZAN BANK ****4417, amounts: ["-2000.00", "-1800.00", "-2300.00", "-2200.00", "-1850.00", "-2200.00"]}
+  - {account: meezan, day: 7, class: remittance_in, description: HOME REMITTANCE PAYONEER INC PRC, amounts: ["560000.00", "504000.00", "644000.00", "616000.00", "518000.00", "616000.00"]}
+  - {account: meezan, day: 10, class: spending, description: IBFT kiraya makaan, amount: "-65000.00"}
+  - {account: meezan, day: 18, class: spending, description: bijli ka bill K-ELECTRIC, amounts: ["-14500.00", "-18200.00", "-22400.00", "-24100.00", "-21800.00", "-16900.00"]}
+  - {account: meezan, day: 22, class: spending, description: ATM CASH WITHDRAWAL, amount: "-40000.00"}
+  - {account: meezan, day: 25, class: own_transfer, description: IBFT to own JAZZCASH wallet, amount: "-20000.00"}
+once:
+  - {account: payoneer, booked: 2026-07-01, class: fee, description: Annual account fee, amount: "-29.95"}
+  - {account: meezan, booked: 2026-08-14, class: cash_deposit, description: CASH DEPOSIT, amount: "350000.00"}
+seeds:
+  - {kind: M2, what: "A PKR 350,000 cash deposit on 2026-08-14 has no identified sender."}
+  - {kind: M4, what: "The tourist checklist asks for salary slips; this applicant has no employer."}
+  - {kind: M5, what: "Income arrives only as Upwork payments from SYN NORTHWIND LLC, with no contract or invoices."}
+expected:
+  closing: {payoneer: "1060.05", meezan: "3125100.00"}
+  remittances_in_pkr: "3458000.00"
+  sponsor_transfers_pkr: "0"
+  largest_unattributed_credit_pkr: "350000.00"
