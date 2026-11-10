@@ -25,7 +25,7 @@ from pakkifile.figures.continuity import largest_unattributed_credit
 from pakkifile.mismatch.continuity import check_unattributed_credit
 from pakkifile.registry.files import load_registry
 from pakkifile.registry.model import RegistryEntry
-from pakkifile.sources.pipeline import TRACER_SOURCE, build_entry
+from pakkifile.sources.pipeline import TRACER_SOURCE, build_entry, same_source
 from pakkifile.vault.ingest import add_person, ingest_statement_csv
 from pakkifile.vault.schema import metadata
 from pakkifile.web.checklist import render_checklist
@@ -87,14 +87,8 @@ def run(conn: Connection, out: Path) -> list[Result]:
         if e.authority.name == TRACER_SOURCE.authority.name
         and e.application == TRACER_SOURCE.application
     )
-    rebuilt, source = build_entry(
-        EXCERPT.read_text(),
-        TRACER_SOURCE,
-        verified=registry.sources[TRACER_SOURCE.source_id].last_verified,
-    )
-    # A published checksum is for the live page, never the excerpt.
-    live = registry.sources[TRACER_SOURCE.source_id].model_copy(update={"checksum": None})
-    same = published == rebuilt and live == source.model_copy(update={"checksum": None})
+    rebuilt, source = build_entry(EXCERPT.read_text(), TRACER_SOURCE, verified=date.today())
+    same = published == rebuilt and same_source(registry.sources[TRACER_SOURCE.source_id], source)
     results.append(Result("registry", "published entry matches source", str(same), same))
 
     checklist = render_checklist(published, registry.sources, date.today())

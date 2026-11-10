@@ -134,13 +134,24 @@ def test_merged_certificates_cover_neither_label() -> None:
 def test_wrong_type_lowers_type_accuracy() -> None:
     items = _perfect()
     items[0] = _item("Admission letter(s)", "optional")
-    assert score(items, SAMPLE).type_accuracy == Decimal("0.8")
+    result = score(items, SAMPLE)
+    assert result.type_accuracy == Decimal("0.8")
+    assert result.mistyped == ("Admission letter(s): optional, expected mandatory",)
 
 
 def test_wrong_condition_lowers_condition_accuracy() -> None:
     items = _perfect()
     items[3] = _item("Copies of the A-level exam degree", "conditional", "if rich")
-    assert score(items, SAMPLE).condition_accuracy == Decimal(0)
+    result = score(items, SAMPLE)
+    assert result.condition_accuracy == Decimal(0)
+    assert result.wrong_condition == (
+        "Copies of the A-level exam degree: condition 'if rich', expected 'applicable'",
+    )
+
+
+def test_perfect_extraction_names_no_mistakes() -> None:
+    result = score(_perfect(), SAMPLE)
+    assert (result.mistyped, result.wrong_condition) == ((), ())
 
 
 def test_no_items_scores_zero_without_crashing() -> None:
@@ -153,6 +164,7 @@ def test_hand_labels_load_for_each_labelled_source() -> None:
     labels = load_labels(LABELS)
     assert {k: sum(1 for x in v if x.required) for k, v in labels.items()} == {
         "de-cg-karachi-student-checklist": 18,
+        "de-missions-pk-business-visa-page": 26,
         "de-missions-pk-study-visa-page": 3,
         "de-missions-pk-tourist-visa-page": 20,
     }
@@ -173,3 +185,11 @@ def test_a_source_that_cannot_be_fetched_fails_the_evaluation(
 
     monkeypatch.setattr(extraction, "fetch", refuse)
     assert not evaluate(load_labels(LABELS), ExtractionModel("m"))
+
+
+def test_the_report_marks_held_out_sources() -> None:
+    result = score(_perfect(), SAMPLE)
+    held_out = list(extraction._report("de-missions-pk-business-visa-page", result))
+    tuned = list(extraction._report("de-cg-karachi-student-checklist", result))
+    assert held_out[0].endswith("(held out)")
+    assert not tuned[0].endswith("(held out)")
