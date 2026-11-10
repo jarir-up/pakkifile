@@ -51,6 +51,15 @@ def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
+# The weekly registry job keeps these up to date, so they never come from the excerpt.
+_KEPT_BY_JOB = {"retrieved", "last_verified", "checksum"}
+
+
+def same_source(published: Source, built: Source) -> bool:
+    """Whether a built source describes the published one, ignoring what the job keeps."""
+    return published.model_dump(exclude=_KEPT_BY_JOB) == built.model_dump(exclude=_KEPT_BY_JOB)
+
+
 def build_entry(html: str, spec: SourceSpec, verified: date) -> tuple[RegistryEntry, Source]:
     """Return the entry and the source it cites, to be stored under `spec.source_id`."""
     source = Source(
