@@ -18,9 +18,8 @@ import yaml
 from pydantic import BaseModel, ConfigDict
 
 from pakkifile.llm.extract import ExtractionError, ExtractionModel, extract_requirements
-from pakkifile.registry.files import SOURCES_FILE, load_sources
+from pakkifile.registry.files import REGISTRY, SOURCES_FILE, load_sources
 from pakkifile.registry.model import ExtractedItem, RequirementType
-from pakkifile.sources.check import REGISTRY
 from pakkifile.sources.fetch import FETCH_FAILURES, fetch
 
 LABELS = Path("evaldata/labels/extraction")

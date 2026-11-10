@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}{{ entry.authority.name }} · {{ entry.application.label }}{% endblock %}
+{% block title %}{{ entry.authority.name }} · {{ entry.application.label }} · {{ entry.applicant_profile }}{% endblock %}
 {% block main %}
-<h1>{{ entry.authority.name }} · {{ entry.application.label }}</h1>
+<h1>{{ entry.authority.name }} · {{ entry.application.label }} · {{ entry.applicant_profile }}</h1>
 <table>
 <thead><tr><th>Requirement</th><th>Type</th><th>Confidence</th><th>Source</th></tr></thead>
 <tbody>

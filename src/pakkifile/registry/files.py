@@ -7,6 +7,8 @@ import yaml
 
 from pakkifile.registry.model import ExtractedItem, Registry, RegistryEntry, Source
 
+# The registry data, relative to the repository root.
+REGISTRY = Path("registry-data")
 SOURCES_FILE = "sources.yaml"
 ENTRIES_DIR = "entries"
 PROPOSALS_DIR = "proposals"
