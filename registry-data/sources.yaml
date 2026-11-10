@@ -4,25 +4,28 @@ de-cg-karachi-student-checklist:
   url: https://pakistan.diplo.de/resource/blob/2290888/dbca85b1c7f634f1a1290ec15a71ac76/checklist---student---language-course-visas-data.pdf
   published: '2020-01-07'
   retrieved: '2026-10-30'
-  last_verified: '2026-10-30'
+  last_verified: '2026-11-10'
   source_authority: official_checklist
   checksum: 42cc6dd2a33a6e34e048980a7fc201ac44f1a7d322ca44b7b241c5adb010defc
-de-missions-pk-study-visa-page:
-  document: Study visa, German Missions in Pakistan
-  url: https://pakistan.diplo.de/pk-en/service/2-study-visa-seite-1676104
-  published: '2025-11-27'
-  retrieved: '2026-10-30'
-  last_verified: '2026-10-30'
-  source_authority: consulate_page
-de-missions-pk-tourist-visa-page:
-  document: Tourist visa, German Missions in Pakistan
-  url: https://pakistan.diplo.de/pk-en/service/3-tourist-visa-seite-1673122
-  retrieved: '2026-10-30'
-  last_verified: '2026-10-30'
-  source_authority: consulate_page
 de-missions-pk-business-visa-page:
   document: Business visa, German Missions in Pakistan
   url: https://pakistan.diplo.de/pk-en/service/1673894-1673894
   retrieved: '2026-11-10'
   last_verified: '2026-11-10'
   source_authority: consulate_page
+  checksum: 9ee5de8ea3cf62da86648ebe9e5b939aeef820958910e3d8bb723d594b00bd7d
+de-missions-pk-study-visa-page:
+  document: Study visa, German Missions in Pakistan
+  url: https://pakistan.diplo.de/pk-en/service/2-study-visa-seite-1676104
+  published: '2025-11-27'
+  retrieved: '2026-11-10'
+  last_verified: '2026-11-10'
+  source_authority: consulate_page
+  checksum: 9eb1bebd57464e3e3ed2fefd4225ab7d39d4d3613ca27729a24e5348b033ab01
+de-missions-pk-tourist-visa-page:
+  document: Tourist visa, German Missions in Pakistan
+  url: https://pakistan.diplo.de/pk-en/service/3-tourist-visa-seite-1673122
+  retrieved: '2026-11-10'
+  last_verified: '2026-11-10'
+  source_authority: consulate_page
+  checksum: 6e9566d65857958ad90c39860f0159fbb36e925af289313d2a74090d723af043
