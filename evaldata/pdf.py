@@ -69,14 +69,19 @@ def encrypt(path: Path, password: str) -> Path:
     return path
 
 
-def paginate(header: Sequence[str], rows: Sequence[str], first: Sequence[str]) -> list[list[str]]:
-    """`first` opens page one; `header` repeats at the top of every page."""
+def paginate(
+    header: Sequence[str], rows: Sequence[str], first: Sequence[str], width: int
+) -> list[list[str]]:
+    """`first` opens page one; `header` repeats on every page; each page ends 'Page n of m'."""
     pages: list[list[str]] = []
     page = [*first, *header]
     for row in rows:
-        if len(page) >= LINES_PER_PAGE:
+        if len(page) >= LINES_PER_PAGE - 2:
             pages.append(page)
             page = list(header)
         page.append(row)
     pages.append(page)
-    return pages
+    return [
+        [*lines, "", f"Page {number} of {len(pages)}".rjust(width)]
+        for number, lines in enumerate(pages, start=1)
+    ]

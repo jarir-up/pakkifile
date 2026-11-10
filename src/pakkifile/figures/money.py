@@ -25,3 +25,8 @@ def parse_minor(text: str) -> int:
     if not _AMOUNT.fullmatch(text):
         raise ValueError(f"not an amount: {text!r}")
     return int(Decimal(text.replace(",", "")) * 100)
+
+
+def net_minor(credit_minor: int, debit_minor: int) -> int:
+    """A statement row's signed amount: credits positive, debits negative."""
+    return credit_minor - debit_minor

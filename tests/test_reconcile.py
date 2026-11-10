@@ -1,7 +1,9 @@
+from dataclasses import dataclass
+
 import pytest
 
 from pakkifile.figures.money import parse_minor
-from pakkifile.figures.reconcile import BalanceRow, balance_gaps
+from pakkifile.figures.reconcile import balance_gaps
 
 
 @pytest.mark.parametrize(
@@ -16,6 +18,14 @@ def test_statement_amounts_parse_to_exact_minor_units(text: str, minor: int) -> 
 def test_malformed_amounts_are_rejected(text: str) -> None:
     with pytest.raises(ValueError):
         parse_minor(text)
+
+
+@dataclass(frozen=True)
+class BalanceRow:
+    row_no: int
+    credit_minor: int
+    debit_minor: int
+    balance_minor: int
 
 
 ROWS = [BalanceRow(1, 500, 0, 1500), BalanceRow(2, 0, 200, 1300)]

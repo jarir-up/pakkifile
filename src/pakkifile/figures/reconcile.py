@@ -1,15 +1,18 @@
 """Check that a statement's own balances add up (FR-13): nothing is stored if they don't."""
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from typing import Protocol
 
 
-@dataclass(frozen=True)
-class BalanceRow:
-    row_no: int
-    credit_minor: int
-    debit_minor: int
-    balance_minor: int
+class BalanceRow(Protocol):
+    @property
+    def row_no(self) -> int: ...
+    @property
+    def credit_minor(self) -> int: ...
+    @property
+    def debit_minor(self) -> int: ...
+    @property
+    def balance_minor(self) -> int: ...
 
 
 def balance_gaps(opening: int, rows: Sequence[BalanceRow], closing: int) -> list[str]:

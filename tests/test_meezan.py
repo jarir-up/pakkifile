@@ -7,9 +7,10 @@ from sqlalchemy import Connection, func, select
 
 from evaldata.meezan import write_meezan_statement
 from evaldata.persona import Persona, load_personas, transactions
+from pakkifile.vault import meezan
 from pakkifile.vault.ingest import add_person
 from pakkifile.vault.meezan import StatementError, ingest_meezan_pdf, parse_meezan, pdf_text
-from pakkifile.vault.schema import statement, statement_row
+from pakkifile.vault.schema import evidence_item, statement, statement_row
 
 ALL = load_personas()
 WITH_MEEZAN = [p for p in ALL.values() if "meezan" in p.accounts]
@@ -55,11 +56,21 @@ def test_ingest_stores_the_statement_and_its_rows(db: Connection, tmp_path: Path
     assert rows == len([t for t in transactions(persona) if t.account == "meezan"])
 
 
-def test_balances_that_do_not_add_up_stop_ingestion(db: Connection, tmp_path: Path) -> None:
-    text = pdf_text(write_meezan_statement(ALL["syn-dev-payoneer"], tmp_path))
-    tampered = text.replace("745,000.00", "746,000.00", 1)
+def test_balances_that_do_not_add_up_stop_ingestion_and_store_nothing(
+    db: Connection, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = write_meezan_statement(ALL["syn-dev-payoneer"], tmp_path)
+    tampered = pdf_text(path).replace("745,000.00", "746,000.00", 1)
+    monkeypatch.setattr(meezan, "pdf_text", lambda *_: tampered)
     with pytest.raises(StatementError, match="off by 100000"):
-        parse_meezan(tampered, check_balances=True)
+        ingest_meezan_pdf(db, add_person(db, "applicant"), path)
+    assert db.scalar(select(func.count()).select_from(evidence_item)) == 0
+
+
+def test_page_footers_are_not_read_as_narration(tmp_path: Path) -> None:
+    text = pdf_text(write_meezan_statement(ALL["syn-dev-payoneer"], tmp_path))
+    assert "Page 1 of 1" in text
+    assert all("Page" not in r.description for r in parse_meezan(text).rows)
 
 
 @needs_qpdf

@@ -78,7 +78,7 @@ def write_meezan_statement(persona: Persona, out_dir: Path, password: str | None
     ]
     out_dir.mkdir(parents=True, exist_ok=True)
     path = write_pdf(
-        paginate(header, lines, first_page),
+        paginate(header, lines, first_page, BALANCE_END),
         out_dir / f"{persona.id}-meezan-statement-synthetic.pdf",
     )
     return encrypt(path, password) if password else path

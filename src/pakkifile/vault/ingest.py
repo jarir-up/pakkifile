@@ -23,17 +23,24 @@ def counterparty_of(description: str) -> str | None:
     return match["counterparty"] if match else None
 
 
-def ingest_statement_csv(conn: Connection, person_id: int, path: Path) -> int:
-    data = path.read_bytes()
-    item_id = int(
+def store_evidence_item(conn: Connection, person_id: int, path: Path) -> int:
+    """Record a file for one person by name and sha256 (ADR-0028); the file is not changed."""
+    return int(
         conn.execute(
             insert(evidence_item)
             .values(
-                person_id=person_id, file_name=path.name, sha256=hashlib.sha256(data).hexdigest()
+                person_id=person_id,
+                file_name=path.name,
+                sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
             )
             .returning(evidence_item.c.id)
         ).scalar_one()
     )
+
+
+def ingest_statement_csv(conn: Connection, person_id: int, path: Path) -> int:
+    data = path.read_bytes()
+    item_id = store_evidence_item(conn, person_id, path)
     rows = list(csv.DictReader(data.decode().splitlines()))
     conn.execute(
         insert(statement_row),
