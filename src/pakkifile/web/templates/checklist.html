@@ -2,7 +2,8 @@
 {% block title %}{{ entry.authority.name }} · {{ entry.application.label }} · {{ entry.applicant_profile }}{% endblock %}
 {% block main %}
 <h1>{{ entry.authority.name }} · {{ entry.application.label }} · {{ entry.applicant_profile }}</h1>
-<table>
+{% if entry.full_list %}<p class="full-list">Full list: <a href="{{ entry.full_list.url }}">{{ entry.full_list.name }}</a></p>
+{% endif %}<table>
 <thead><tr><th>Requirement</th><th>Type</th><th>Confidence</th><th>Source</th></tr></thead>
 <tbody>
 {% for req in entry.requirements %}

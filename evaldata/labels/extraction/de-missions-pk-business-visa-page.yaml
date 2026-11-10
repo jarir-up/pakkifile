@@ -1,0 +1,41 @@
+# Held out: see HELD_OUT in eval/extraction.py.
+# Hand labels from the page's "Required documents" section, read 2026-11-10. Matching works as
+# in the tourist labels. The papers the invitation must append are required: false because the
+# page does not say whether they are separate documents or part of the invitation.
+- {text: Current and previous passports, type: [mandatory], must_contain: [previous passports], must_not_contain: [lost]}
+- {text: Videx application form, type: [mandatory], must_contain: [videx]}
+- {text: Two biometric photos, type: [mandatory], must_contain: [two, photo]}
+- {text: Health insurance of at least 30000 euro, type: [mandatory], must_contain: [insurance, "30000"]}
+- {text: Invitation letter from the company in Germany, type: [mandatory], must_contain: [invitation]}
+- {text: Commercial register extract of the inviting company, type: [mandatory], must_contain: [commercial register], required: false}
+- {text: Authorisation of the undersigned, type: [mandatory], must_contain: [undersigned, authori], must_not_contain: [passport], required: false}
+- {text: Passport copy of the undersigned, type: [mandatory], must_contain: [undersigned, passport], required: false}
+- {text: Stall rental confirmation for trade fair exhibitors, type: [conditional], must_contain: [stall], condition_contains: exhibitor}
+- {text: Exhibitor pass listed separately, type: [conditional], must_contain: [exhibitor pass], must_not_contain: [stall], required: false}
+- {text: Entrance tickets for trade fair visitors, type: [conditional], must_contain: [entrance], condition_contains: visit}
+- {text: Fair organiser confirmation that tickets are sold on arrival, type: [conditional], must_contain: [organi], must_not_contain: [entrance, invitation], required: false}
+- {text: Hotel bookings, type: [mandatory], must_contain: [hotel]}
+- {text: Round-trip flight, type: [mandatory], must_contain: [flight]}
+- {text: Business reference letter from the Pakistani company, type: [mandatory], must_contain: [reference letter]}
+- {text: Copies of pages 1 and 2 of the current passport, type: [mandatory], must_contain: [passport, "1", "2"]}
+- {text: Police report for a lost passport, type: [conditional], must_contain: [police report], condition_contains: lost}
+- {text: Previous visa refusals, type: [mandatory, conditional], must_contain: [refusal]}
+- {text: CNIC copy, type: [mandatory], must_contain: [cnic]}
+- {text: Family Registration Certificate, type: [mandatory], must_contain: [family registration], must_not_contain: [marriage]}
+- {text: Marriage certificate, type: [conditional], must_contain: [marriage], must_not_contain: [birth], condition_contains: applicable}
+- {text: Birth certificate, type: [conditional], must_contain: [birth], must_not_contain: [marriage], condition_contains: minor}
+- {text: List of children, type: [mandatory], must_contain: [children]}
+- {text: List of relatives abroad, type: [mandatory], must_contain: [relatives]}
+- {text: Appointment email, type: [mandatory], must_contain: [appointment]}
+- {text: Copies of previous visas, type: [mandatory, conditional], must_contain: [visa, cop], must_not_contain: [refusal]}
+- {text: Personal bank statements for six months, type: [mandatory], must_contain: [bank statements, six months], must_not_contain: [company]}
+- {text: Salary slips for three months, type: [mandatory], must_contain: [salary slips, three months]}
+- {text: Pension books, type: [optional], must_contain: [pension], required: false}
+- {text: Investment documents, type: [optional], must_contain: [investment], required: false}
+- {text: Property documents, type: [optional], must_contain: [property], required: false}
+- {text: Company bank statements for six months, type: [mandatory], must_contain: [company, bank statements, six months]}
+- {text: FBR tax return acknowledgements for two fiscal years, type: [mandatory], must_contain: [tax return]}
+- {text: Other documents showing the company's good standing, type: [optional], must_contain: [good standing], required: false}
+- {text: Bills of lading for the latest shipments to Europe, type: [optional], must_contain: [lading, europe], required: false}
+- {text: Bill of lading, type: [conditional, mandatory], must_contain: [lading], must_not_contain: [europe]}
+- {text: Recent shipment documents, type: [conditional, mandatory], must_contain: [shipment], must_not_contain: [lading, europe], required: false}

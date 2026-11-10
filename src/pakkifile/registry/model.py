@@ -83,11 +83,19 @@ class Application(_Frozen):
         return f"{self.name} ({self.visa_category})" if self.visa_category else self.name
 
 
+class FullList(_Frozen):
+    """Where the whole list lives when the cited sources publish only part of it."""
+
+    name: str
+    url: str
+
+
 class RegistryEntry(_Frozen):
     authority: Authority
     application: Application
     applicant_profile: str
     requirements: tuple[Requirement, ...]
+    full_list: FullList | None = None
 
 
 class Registry(_Frozen):

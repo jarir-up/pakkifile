@@ -23,6 +23,8 @@ from pakkifile.registry.model import ExtractedItem, RequirementType
 from pakkifile.sources.fetch import FETCH_FAILURES, fetch
 
 LABELS = Path("evaldata/labels/extraction")
+# Never tuned against: a failure here means label another source, not change the prompt.
+HELD_OUT = frozenset({"de-missions-pk-business-visa-page"})
 GATES = {
     "precision": Decimal("0.90"),
     "recall": Decimal("0.95"),
@@ -52,6 +54,8 @@ class ExtractionResult:
     numbers_exact: Decimal
     missing: tuple[str, ...]
     extra: tuple[str, ...]
+    mistyped: tuple[str, ...]
+    wrong_condition: tuple[str, ...]
 
 
 def _norm(text: str) -> str:
@@ -95,22 +99,30 @@ def score(items: Sequence[ExtractedItem], labels: Sequence[Label]) -> Extraction
             matched[i] = j
     found = set(matched.values())
     required = [j for j, label in enumerate(labels) if label.required]
-    typed = sum(1 for i, j in matched.items() if items[i].type in labels[j].type)
-    with_condition = [
-        (items[i], condition)
+    mistyped = tuple(
+        f"{items[i].text}: {items[i].type}, expected {' or '.join(labels[j].type)}"
         for i, j in matched.items()
-        if (condition := labels[j].condition_contains)
+        if items[i].type not in labels[j].type
+    )
+    with_condition = [
+        (items[i], want) for i, j in matched.items() if (want := labels[j].condition_contains)
     ]
-    conditioned = sum(1 for item, want in with_condition if want in _norm(item.condition or ""))
+    wrong_condition = tuple(
+        f"{item.text}: condition {item.condition!r}, expected {want!r}"
+        for item, want in with_condition
+        if want not in _norm(item.condition or "")
+    )
     numeric = [j for j in required if any(fact.isdigit() for fact in labels[j].must_contain)]
     return ExtractionResult(
         precision=_ratio(len(matched), len(items)) if items else Decimal(0),
         recall=_ratio(sum(1 for j in required if j in found), len(required)),
-        type_accuracy=_ratio(typed, len(matched)),
-        condition_accuracy=_ratio(conditioned, len(with_condition)),
+        type_accuracy=_ratio(len(matched) - len(mistyped), len(matched)),
+        condition_accuracy=_ratio(len(with_condition) - len(wrong_condition), len(with_condition)),
         numbers_exact=_ratio(sum(1 for j in numeric if j in found), len(numeric)),
         missing=tuple(labels[j].text for j in required if j not in found),
         extra=tuple(item.text for i, item in enumerate(items) if i not in matched),
+        mistyped=mistyped,
+        wrong_condition=wrong_condition,
     )
 
 
@@ -128,9 +140,12 @@ def load_labels(root: Path) -> dict[str, tuple[Label, ...]]:
 def _report(source_id: str, result: ExtractionResult) -> Iterable[str]:
     verdict = "PASS" if passes(result) else "FAIL"
     metrics = " ".join(f"{metric}={getattr(result, metric):.2f}" for metric in GATES)
-    yield f"{verdict}  {source_id} {metrics}"
+    held_out = " (held out)" if source_id in HELD_OUT else ""
+    yield f"{verdict}  {source_id} {metrics}{held_out}"
     yield from (f"  missing: {text}" for text in result.missing)
     yield from (f"  extra: {text}" for text in result.extra)
+    yield from (f"  wrong type: {text}" for text in result.mistyped)
+    yield from (f"  wrong condition: {text}" for text in result.wrong_condition)
 
 
 def evaluate(labels: Mapping[str, Sequence[Label]], model: ExtractionModel) -> bool:

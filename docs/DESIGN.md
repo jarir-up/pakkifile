@@ -32,6 +32,8 @@ All text tokens pass WCAG AA against `--bg` (6.3:1 or higher).
 ## Components
 Each component is added here the first time an issue builds it, and the owner approves it in that PR's diff. New UI reuses these before adding new ones.
 
+- **Full-list link**: one paragraph above a checklist table, `Full list: <portal name>` linking to where the authority publishes the rest. Shown only when the entry records one.
+
 ## Screen rules
 - Every screen has one primary action.
 - Labels are the shortest words that work. No taglines, helper text or secondary labels; if a screen needs them, the layout is wrong.

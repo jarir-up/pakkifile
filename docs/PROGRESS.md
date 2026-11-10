@@ -6,10 +6,10 @@ What's done lives in closed issues and merged PRs. This file holds only what the
 
 Q-1 to Q-15 settled 2026-10-30 (ADR-0012, 0030 to 0041; DESIGN.md; RULES R-22).
 
+- **Portal walks (ADR-0047, Proposed).** Contributors walk portals the pipeline cannot read, for vesting points. Needs your call on its three open questions.
 - **Rules gate on GitHub Models.** The `rules` CI job is disabled for zero spend. Later, switch `scripts/rules_gate.py` to GitHub Models (free tier via `GITHUB_TOKEN`) and re-enable it. Until then, `/code-review` against `docs/RULES.md` before every commit is the only rules check.
 
 
-- **Enable GitHub Pages.** Settings → Pages → Source: GitHub Actions, before brief 04 merges; the site deploys from then on.
 
 ## Broke
 
@@ -17,5 +17,5 @@ Q-1 to Q-15 settled 2026-10-30 (ADR-0012, 0030 to 0041; DESIGN.md; RULES R-22).
 
 ## Next
 
-1. Brief 03: source pipeline (fetch, change detection, model extraction) on the free CPU runner. `france-visas.gouv.fr` returned 403 from the runner.
-2. Complete the German Embassy Islamabad study entry; it holds only 3 items from one section of the page.
+1. Brief 04: hosted checklist. `france-visas.gouv.fr` returned 403 from the runner.
+2. Complete the German Embassy Islamabad study entry from a portal walk (ADR-0047); the checklist will link to the portal (#19, needs ADR-0048).

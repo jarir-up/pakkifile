@@ -20,3 +20,9 @@ de-missions-pk-tourist-visa-page:
   retrieved: '2026-10-30'
   last_verified: '2026-10-30'
   source_authority: consulate_page
+de-missions-pk-business-visa-page:
+  document: Business visa, German Missions in Pakistan
+  url: https://pakistan.diplo.de/pk-en/service/1673894-1673894
+  retrieved: '2026-11-10'
+  last_verified: '2026-11-10'
+  source_authority: consulate_page
