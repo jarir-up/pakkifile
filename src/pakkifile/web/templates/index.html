@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}PakkiFile{% endblock %}
+{% block main %}
+<h1>PakkiFile</h1>
+{% for name, entries in authorities %}
+<h2>{{ name }}</h2>
+<ul>
+{% for entry, href in entries %}
+<li><a href="{{ href }}">{{ entry.application.label }} · {{ entry.applicant_profile }}</a></li>
+{% endfor %}
+</ul>
+{% endfor %}
+{% endblock %}

@@ -9,12 +9,11 @@ from datetime import date
 from pathlib import Path
 from typing import Literal
 
-from pakkifile.registry.files import SOURCES_FILE, load_sources, save_sources
+from pakkifile.registry.files import REGISTRY, SOURCES_FILE, load_sources, save_sources
 from pakkifile.registry.model import Source
 from pakkifile.sources.fetch import FETCH_FAILURES, FetchedSource, fetch
 
 CheckStatus = Literal["unchanged", "changed", "new", "failed"]
-REGISTRY = Path("registry-data")
 
 
 @dataclass(frozen=True)
