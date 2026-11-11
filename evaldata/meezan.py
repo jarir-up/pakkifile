@@ -6,7 +6,8 @@ Currency (as "Pakistan Rupee(PKR)"), From Date, To Date; Opening Balance, Closin
 (as "PKR60,964.71"), Address. Dates read "01Jul 2024". The table header is indented: Booking
 Date, Description, Credit, Debit, Available Balance.
 
-Not yet confirmed: how rows write their dates and amounts. They follow the header here.
+Rows (confirmed 2026-11-11) read "02Jul 2024", a credit as "+ PKR248,500.00" and the balance as
+"PKR299,464.71". Not yet confirmed: a debit, written here as "- PKR1,000.00".
 Long descriptions wrap onto continuation lines, as bank narrations do.
 """
 
@@ -17,10 +18,10 @@ from pathlib import Path
 from evaldata.pdf import encrypt, paginate, write_pdf
 from evaldata.persona import Persona, transactions
 
-DESCRIPTION_WIDTH = 38
+DESCRIPTION_WIDTH = 32
 # Where each column's text starts or ends, in characters; amounts are right-aligned.
 DATE_AT, DESCRIPTION_AT = 5, 19
-CREDIT_END, DEBIT_END, BALANCE_END = 73, 88, 108
+CREDIT_END, DEBIT_END, BALANCE_END = 70, 89, 108
 GRID = (26, 22, 30)  # widths of the header grid's first three columns
 ADDRESS = "House 0, Synthetic Town"
 CURRENCY_NAMES = {"PKR": "Pakistan Rupee"}
@@ -45,6 +46,11 @@ def _amount(minor: int) -> str:
     return f"{sign}{major:,}.{cents:02d}"
 
 
+def _money(minor: int, code: str, sign: str = "") -> str:
+    """As the statement prints it: "PKR60,964.71", or "+ PKR248,500.00" in a row."""
+    return f"{sign} {code}{_amount(minor)}" if sign else f"{code}{_amount(minor)}"
+
+
 def _row(left: str, credit: str = "", debit: str = "", balance: str = "") -> str:
     line = left.ljust(DESCRIPTION_AT + DESCRIPTION_WIDTH)
     line += credit.rjust(CREDIT_END - len(line))
@@ -60,22 +66,22 @@ def write_meezan_statement(persona: Persona, out_dir: Path, password: str | None
     account = persona.accounts["meezan"]
     rows = [t for t in transactions(persona) if t.account == "meezan"]
     balance = account.opening
+    code = account.currency
     lines = []
     for t in rows:
         balance += t.amount_minor
         first, *rest = textwrap.wrap(t.description, DESCRIPTION_WIDTH)
-        credit = _amount(t.amount_minor) if t.amount_minor > 0 else ""
-        debit = _amount(-t.amount_minor) if t.amount_minor < 0 else ""
+        credit = _money(t.amount_minor, code, "+") if t.amount_minor > 0 else ""
+        debit = _money(-t.amount_minor, code, "-") if t.amount_minor < 0 else ""
         lines.append(
             _row(
                 f"{' ' * DATE_AT}{_date(t.date)}".ljust(DESCRIPTION_AT) + first,
                 credit,
                 debit,
-                _amount(balance),
+                _money(balance, code),
             )
         )
         lines += [_row(" " * DESCRIPTION_AT + more) for more in rest]
-    code = account.currency
     first_page = [
         "SYNTHETIC STATEMENT - NOT A BANK DOCUMENT",
         "",
@@ -91,8 +97,8 @@ def write_meezan_statement(persona: Persona, out_dir: Path, password: str | None
             ("To Date", _date(persona.period_to)),
         ),
         *_grid(
-            ("Opening Balance", f"{code}{_amount(account.opening)}"),
-            ("Closing Balance", f"{code}{_amount(balance)}"),
+            ("Opening Balance", _money(account.opening, code)),
+            ("Closing Balance", _money(balance, code)),
             ("Address", ADDRESS),
         ),
     ]

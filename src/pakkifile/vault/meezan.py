@@ -33,8 +33,8 @@ _LABELS = (
 _CELL = re.compile(r"\S+(?: \S+)*")  # text up to a gap of two or more spaces
 _DATE = re.compile(r"^\s*(\d{2}[A-Z][a-z]{2} \d{4})\s")
 _CURRENCY = re.compile(r"\(([A-Z]{3})\)$")
-_AMOUNT = re.compile(r"-?[\d,]+\.\d{2}")
-_AMOUNT_WITH_CODE = re.compile(r"(?:\b[A-Z]{3})?-?[\d,]+\.\d{2}")  # "560,000.00" or "PKR560,000.00"
+# "560,000.00", "PKR560,000.00" or "+ PKR560,000.00": the column, not the sign, says credit.
+_AMOUNT = re.compile(r"(?:[+-] ?)?(?:\b[A-Z]{3})?(-?[\d,]+\.\d{2})")
 _COLUMNS = ("Credit", "Debit", "Available Balance")
 _PAGE = re.compile(r"Page \d+ of \d+")
 
@@ -115,7 +115,7 @@ def _amounts(line: str, ends: dict[str, int]) -> dict[str, int]:
         column = min(ends, key=lambda name: abs(ends[name] - match.end()))
         if column in found:
             raise StatementError(f"two amounts in the {column} column: {line.strip()}")
-        found[column] = parse_minor(match.group())
+        found[column] = parse_minor(match.group(1))
     return found
 
 
@@ -157,7 +157,7 @@ def parse_meezan(text: str) -> MeezanStatement:
                 MeezanRow(
                     row_no=len(rows) + 1,
                     booked=_day(date_match.group(1)),
-                    description=_AMOUNT_WITH_CODE.sub("", line[date_match.end() :]).strip(),
+                    description=_AMOUNT.sub("", line[date_match.end() :]).strip(),
                     credit_minor=amounts.get("Credit", 0),
                     debit_minor=amounts.get("Debit", 0),
                     balance_minor=amounts["Available Balance"],

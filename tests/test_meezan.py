@@ -118,18 +118,20 @@ def test_the_real_header_layout_reads() -> None:
     assert parsed.rows == ()
 
 
-def test_row_amounts_with_a_currency_code_leave_the_description_clean() -> None:
+def test_the_real_row_layout_reads() -> None:
+    """A row from the owner's statement, 2026-11-11: amounts carry a sign and the currency."""
     text = REAL_HEADER.replace(
         "PKR60,000.00                       PKR60,000.00",
-        "PKR60,000.00                       PKR61,000.00",
+        "PKR50,964.71                       PKR299,464.71",
     )
-    row = "     02Jul 2024                     SYN SALARY          PKR1,000.00                                    PKR61,000.00"
+    row = (
+        "      02Jul 2024               Cash Deposit 1289318        + PKR248,500.00"
+        "                                     PKR299,464.71"
+    )
     (parsed,) = parse_meezan(text + row + "\n").rows
-    assert (parsed.description, parsed.credit_minor, parsed.balance_minor) == (
-        "SYN SALARY",
-        100_000,
-        6_100_000,
-    )
+    assert (parsed.booked, parsed.description) == (date(2024, 7, 2), "Cash Deposit 1289318")
+    assert (parsed.credit_minor, parsed.debit_minor) == (24_850_000, 0)
+    assert parsed.balance_minor == 29_946_471
 
 
 def test_a_long_account_title_keeps_each_value_with_its_label() -> None:
