@@ -1,6 +1,7 @@
 # ADR-0055: Vault tables for statements
 
-- Status: Proposed
+- Status: Approved
+- Approved by: Muhammad Jariruddin, 2026-11-11
 
 ## Context
 Brief 05 reads full bank and platform statements. The tracer's vault (`person`, `evidence_item`, `statement_row`) has nowhere to keep a statement's account, period and balances, or to flag a possible duplicate (ADR-0028). R-03 needs an approved ADR for a schema change.

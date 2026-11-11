@@ -1,5 +1,6 @@
 import os
 import shutil
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -86,3 +87,55 @@ def test_a_wrong_password_fails_and_stores_nothing(db: Connection, tmp_path: Pat
     with pytest.raises(StatementError, match="password"):
         ingest_meezan_pdf(db, person, path, password="0000")
     assert db.scalar(select(func.count()).select_from(statement)) == 0
+
+
+# The real header's shape, from the owner's statement (values replaced with synthetic ones).
+REAL_HEADER = """
+Account Title                      Account Number          IBAN                                        Scan Code
+SYN TEST               00000009999999900000          PK00SYNM00000009999999900000
+
+
+Currency                           From Date               To Date
+Pakistan Rupee(PKR)                01Jul 2024              30Jun 2025
+
+
+Opening Balance                    Closing Balance         Address
+PKR60,000.00                       PKR60,000.00            SYN ADDRESS
+
+
+
+     Booking Date                     Description                Credit                    Debit               Available Balance
+"""
+
+
+def test_the_real_header_layout_reads() -> None:
+    parsed = parse_meezan(REAL_HEADER)
+    assert (parsed.account_title, parsed.account_number) == ("SYN TEST", "00000009999999900000")
+    assert parsed.iban == "PK00SYNM00000009999999900000"
+    assert parsed.currency == "PKR"
+    assert (parsed.period_from, parsed.period_to) == (date(2024, 7, 1), date(2025, 6, 30))
+    assert parsed.opening_minor == parsed.closing_minor == 6_000_000
+    assert parsed.rows == ()
+
+
+def test_row_amounts_with_a_currency_code_leave_the_description_clean() -> None:
+    text = REAL_HEADER.replace(
+        "PKR60,000.00                       PKR60,000.00",
+        "PKR60,000.00                       PKR61,000.00",
+    )
+    row = "     02Jul 2024                     SYN SALARY          PKR1,000.00                                    PKR61,000.00"
+    (parsed,) = parse_meezan(text + row + "\n").rows
+    assert (parsed.description, parsed.credit_minor, parsed.balance_minor) == (
+        "SYN SALARY",
+        100_000,
+        6_100_000,
+    )
+
+
+def test_a_long_account_title_keeps_each_value_with_its_label() -> None:
+    long = REAL_HEADER.replace(
+        "SYN TEST               ", "SYN TEST AND SONS JOINT ACCOUNT HOLDERS  "
+    )
+    parsed = parse_meezan(long)
+    assert parsed.account_title == "SYN TEST AND SONS JOINT ACCOUNT HOLDERS"
+    assert parsed.account_number == "00000009999999900000"

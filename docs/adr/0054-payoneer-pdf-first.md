@@ -1,6 +1,7 @@
 # ADR-0054: Payoneer's PDF statement before its CSV export
 
-- Status: Proposed
+- Status: Approved
+- Approved by: Muhammad Jariruddin, 2026-11-11
 
 ## Context
 ADR-0049 chose Payoneer's CSV export. The layout the owner could supply on 2026-11-10 is Payoneer's PDF statement, from a public sample on Scribd (document 788425026). No source for the CSV's column order has been found.
