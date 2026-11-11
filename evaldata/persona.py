@@ -12,22 +12,12 @@ from typing import Annotated, Literal, Self
 import yaml
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
+from pakkifile.vault.classify import RowClass
+
 PERSONAS = Path("evaldata/personas")
 
 AccountName = Literal["payoneer", "meezan"]
 MismatchKind = Literal["M1", "M2", "M3", "M4", "M5", "M6"]
-# GLOSSARY "Counterparty" and FR-11; the classifier's classes.
-RowClass = Literal[
-    "client_payment",  # a counterparty pays the applicant on a platform
-    "platform_withdrawal",  # money leaves the platform for the applicant's bank
-    "remittance_in",  # a foreign credit reaches the bank
-    "sponsor_transfer",
-    "cash_deposit",
-    "own_transfer",
-    "fee",
-    "tax",
-    "spending",
-]
 
 
 def _minor(value: object) -> int:
