@@ -4,7 +4,7 @@ Each transaction line carries its hand-labelled class, the truth the classifier 
 against. Amounts are written in major units for editing and held as integer minor units.
 """
 
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Literal, Self
@@ -115,6 +115,10 @@ class Persona(_Frozen):
             if line.amounts is not None and len(line.amounts) != self.months:
                 raise ValueError(f"{line.description}: needs {self.months} amounts")
         return self
+
+    @property
+    def period_to(self) -> date:
+        return _month(self.period_from, self.months) - timedelta(days=1)
 
 
 class Transaction(_Frozen):
