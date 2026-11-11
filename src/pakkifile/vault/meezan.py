@@ -14,8 +14,13 @@ from sqlalchemy import Connection, insert, select
 
 from pakkifile.figures.money import net_minor, parse_minor
 from pakkifile.figures.reconcile import balance_gaps
+from pakkifile.vault.classify import rule_columns
 from pakkifile.vault.dedupe import IncomingRow, StoredRow, fingerprint, sort_rows
-from pakkifile.vault.ingest import file_sha256, store_evidence_item, stored_evidence_item
+from pakkifile.vault.ingest import (
+    file_sha256,
+    store_evidence_item,
+    stored_evidence_item,
+)
 from pakkifile.vault.schema import statement, statement_row
 
 # The header is a grid: a line of these labels, then their values on the next line.
@@ -242,6 +247,7 @@ def ingest_meezan_pdf(
                         "balance_minor": row.balance_minor,
                         "possible_duplicate_of": flagged.get(row.row_no),
                         "fingerprint": fingerprint(parsed.account_number, row),
+                        **rule_columns(row.description, row.amount_minor, "bank"),
                     }
                     for row in new
                 ],

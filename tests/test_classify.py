@@ -1,7 +1,16 @@
-import pytest
+from pathlib import Path
 
+import pytest
+from sqlalchemy import Connection, select
+
+from evaldata.meezan import write_meezan_statement
 from evaldata.persona import load_personas, transactions
+from evaldata.statement import TRACER_FACTS, write_statement
+from pakkifile.vault import meezan
 from pakkifile.vault.classify import AccountKind, classify
+from pakkifile.vault.ingest import add_person, ingest_statement_csv
+from pakkifile.vault.meezan import ingest_meezan_pdf, pdf_text
+from pakkifile.vault.schema import statement_row
 
 SPONSORS = ("SYN TARIQ MAHMOOD",)
 
@@ -72,3 +81,46 @@ def test_every_persona_row_gets_its_labelled_class() -> None:
             account: AccountKind = "platform" if t.account == "payoneer" else "bank"
             got = classify(t.description, t.amount_minor, account, sponsors).row_class
             assert got == t.row_class, (persona.id, t.description)
+
+
+def test_ingested_rows_carry_their_rule_class(db: Connection, tmp_path: Path) -> None:
+    persona = load_personas()["syn-dev-payoneer"]
+    ingest_meezan_pdf(db, add_person(db, "applicant"), write_meezan_statement(persona, tmp_path))
+    stored = db.execute(
+        select(
+            statement_row.c.description,
+            statement_row.c.row_class,
+            statement_row.c.class_source,
+            statement_row.c.needs_review,
+        )
+    ).all()
+    labels = {t.description: t.row_class for t in transactions(persona) if t.account == "meezan"}
+    assert stored and all(row.row_class == labels[row.description] for row in stored)
+    assert {(row.class_source, row.needs_review) for row in stored} == {("rule", False)}
+
+
+def test_csv_rows_are_classified_on_ingest(db: Connection, tmp_path: Path) -> None:
+    ingest_statement_csv(
+        db, add_person(db, "applicant"), write_statement(TRACER_FACTS, 7, tmp_path)
+    )
+    classes = db.scalars(
+        select(statement_row.c.row_class).where(
+            statement_row.c.description.like("HOME REMITTANCE%")
+        )
+    ).all()
+    assert classes == ["remittance_in"] * len(TRACER_FACTS.remittances)
+
+
+def test_an_ambiguous_row_is_stored_unclassified_and_waits_for_review(
+    db: Connection, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    persona = load_personas()["syn-dev-payoneer"]
+    path = write_meezan_statement(persona, tmp_path)
+    text = pdf_text(path).replace("IBFT kiraya makaan", "IBFT SYN PERSON 0001")
+    monkeypatch.setattr(meezan, "pdf_text", lambda *_: text)
+    ingest_meezan_pdf(db, add_person(db, "applicant"), path)
+    row = db.execute(
+        select(statement_row).where(statement_row.c.description == "IBFT SYN PERSON 0001")
+    ).first()
+    assert row is not None
+    assert (row.row_class, row.class_source, row.needs_review) == (None, None, True)

@@ -8,7 +8,7 @@ memo terms (ADR-0033). Each rule only applies in its direction: a credit is neve
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, TypedDict
 
 RowClass = Literal[
     "client_payment",  # a counterparty pays the applicant on a platform (GLOSSARY)
@@ -24,6 +24,7 @@ RowClass = Literal[
 Direction = Literal["credit", "debit"]
 # A platform (Payoneer) statement or a bank statement: some rows only make sense on one.
 AccountKind = Literal["platform", "bank"]
+ClassSource = Literal["rule", "model", "applicant"]  # the applicant's decision always wins
 
 
 @dataclass(frozen=True)
@@ -125,3 +126,22 @@ def classify(
     classes = {row_class for _, row_class in matched}
     names = tuple(name for name, _ in matched)
     return RuleResult(classes.pop() if len(classes) == 1 else None, names)
+
+
+class ClassColumns(TypedDict):
+    row_class: RowClass | None
+    class_source: ClassSource | None
+    needs_review: bool
+
+
+def rule_columns(description: str, amount_minor: int, account: AccountKind) -> ClassColumns:
+    """A row's class at ingestion (ADR-0056): rules only; an ambiguous row waits for review.
+
+    Sponsor names aren't in the vault yet, so a named sponsor's transfer waits too.
+    """
+    row_class = classify(description, amount_minor, account).row_class
+    return {
+        "row_class": row_class,
+        "class_source": "rule" if row_class else None,
+        "needs_review": row_class is None,
+    }
