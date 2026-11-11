@@ -18,7 +18,7 @@ Q-1 to Q-15 settled 2026-10-30 (ADR-0012, 0030 to 0041; DESIGN.md; RULES R-22). 
 ## Next
 
 - Classifier rules are tuned on the persona memos (dev split). Write a held-out set of real-style memos (ADR-0029) before trusting its accuracy; ideally the owner writes it.
-- Meezan rows: confirm how a real statement writes row dates and amounts (the header is confirmed, 2026-11-11).
+- Personas: owner reviews a set of 20 to 25 personas before the generation layer is built; three may be too narrow a sample (owner, 2026-11-11).
 
 1. Brief 05: local evidence vault. `france-visas.gouv.fr` returned 403 from the runner.
 2. Build portal walks (ADR-0047): `portal_walk` source authority, issue form, contributor ledger. Then complete the Islamabad study entry from a walk.

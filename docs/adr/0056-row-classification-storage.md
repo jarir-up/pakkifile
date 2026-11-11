@@ -1,6 +1,6 @@
 # ADR-0056: Where row classifications are kept
 
-- Status: Proposed
+- Status: Approved (owner, 2026-11-11)
 
 ## Context
 Rules classify statement rows (ADR-0018). Ambiguous rows go to a local model (ADR-0051), and uncertain ones to the applicant's review (ADR-0052), whose corrections become evaluation data. R-03 needs an approved ADR for the schema.
