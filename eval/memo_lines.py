@@ -19,7 +19,7 @@ from typing import get_args
 
 from pakkifile.vault.classify import Direction, RowClass
 from pakkifile.vault.meezan import parse_meezan
-from pakkifile.vault.statements import StatementError, StatementRow, pdf_text
+from pakkifile.vault.statements import StatementError, StatementRow, read_pdf
 
 OUT = Path(__file__).resolve().parents[1] / "vault" / "memos-to-label.yaml"
 LIMIT = 30
@@ -43,20 +43,11 @@ def spread(items: list[Memo], limit: int = LIMIT) -> list[Memo]:
     return [items[i * len(items) // limit] for i in range(limit)]
 
 
-def _read(path: Path) -> str:
-    """The statement's text, asking for its password only if it has one."""
-    try:
-        return pdf_text(path)
-    except StatementError as error:
-        if "password" not in str(error):
-            raise
-        return pdf_text(path, getpass.getpass(f"Password for {path.name}: "))
-
-
 def main() -> None:
     path = Path(sys.argv[1])
     try:
-        memos = distinct_memos(parse_meezan(_read(path)).rows)
+        text, _ = read_pdf(path, lambda p: getpass.getpass(f"Password for {p.name}: "))
+        memos = distinct_memos(parse_meezan(text).rows)
     except StatementError as error:
         sys.exit(f"Can't read {path.name}: {error}")
     picked = spread(memos)

@@ -86,14 +86,15 @@ def test_every_persona_row_gets_its_labelled_class() -> None:
 
 def test_ingested_rows_carry_their_rule_class(db: Connection, tmp_path: Path) -> None:
     persona = load_personas()["syn-dev-payoneer"]
-    ingest_meezan_pdf(db, add_person(db, "applicant"), write_meezan_statement(persona, tmp_path))
+    person = add_person(db, "applicant")
+    ingest_meezan_pdf(db, person, write_meezan_statement(persona, tmp_path))
     stored = db.execute(
         select(
             statement_row.c.description,
             statement_row.c.row_class,
             statement_row.c.class_source,
             statement_row.c.needs_review,
-        )
+        ).where(statement_row.c.person_id == person)
     ).all()
     labels = {t.description: t.row_class for t in transactions(persona) if t.account == "meezan"}
     assert stored and all(row.row_class == labels[row.description] for row in stored)
@@ -101,12 +102,12 @@ def test_ingested_rows_carry_their_rule_class(db: Connection, tmp_path: Path) ->
 
 
 def test_csv_rows_are_classified_on_ingest(db: Connection, tmp_path: Path) -> None:
-    ingest_statement_csv(
-        db, add_person(db, "applicant"), write_statement(TRACER_FACTS, 7, tmp_path)
-    )
+    person = add_person(db, "applicant")
+    ingest_statement_csv(db, person, write_statement(TRACER_FACTS, 7, tmp_path))
     classes = db.scalars(
         select(statement_row.c.row_class).where(
-            statement_row.c.description.like("HOME REMITTANCE%")
+            statement_row.c.person_id == person,
+            statement_row.c.description.like("HOME REMITTANCE%"),
         )
     ).all()
     assert classes == ["remittance_in"] * len(TRACER_FACTS.remittances)

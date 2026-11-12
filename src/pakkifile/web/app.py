@@ -15,9 +15,8 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from pakkifile.figures.money import Money
 from pakkifile.vault.classify import RowClass
-from pakkifile.vault.db import vault_engine
+from pakkifile.vault.db import open_vault
 from pakkifile.vault.review import ReviewError, awaiting_review, decide
-from pakkifile.vault.schema import metadata
 from pakkifile.web.templates import env
 
 HOST = "127.0.0.1"
@@ -72,8 +71,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--person", type=int, required=True)
     args = parser.parse_args()
-    engine = vault_engine()
-    metadata.create_all(engine)  # missing tables only; migrations wait for a release (ADR-0055)
+    engine = open_vault()
     uvicorn.run(create_app(engine.begin, args.person), host=HOST, port=PORT)
 
 

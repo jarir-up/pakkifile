@@ -26,7 +26,7 @@ def test_the_same_file_is_ingested_once(db: Connection, tmp_path: Path) -> None:
     count = _rows(db, person)
     assert ingest_meezan_pdf(db, person, path) == first
     assert _rows(db, person) == count
-    assert db.scalar(select(func.count()).select_from(evidence_item)) == 1
+    assert db.scalar(select(func.count()).where(evidence_item.c.person_id == person)) == 1
 
 
 def test_overlapping_statements_store_each_transaction_once(db: Connection, tmp_path: Path) -> None:
