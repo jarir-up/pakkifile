@@ -4,8 +4,10 @@ Layout source: a public sample statement (Scribd document 788425026), as the own
 2026-11-10. Header: company header, address, Primary Account Number, Account Currency,
 Period, Issuing Date. Columns: Date, Description, Amount, Status, Running Balance.
 
-Not yet confirmed, so guessed here: "Label: value" header lines, dates as "03 Apr 2026",
-signed amounts without a currency, "Completed" as the status, oldest row first.
+Rows (owner, 2026-11-12) run newest first, dated "19 Sep, 2024", the amount carrying its
+currency ("-12.00 USD"), a status such as "Completed" on some rows, then the running balance.
+Not yet confirmed, so guessed here: "Label: value" header lines, and which rows show a status
+(here, money out only).
 """
 
 import textwrap
@@ -22,7 +24,7 @@ AMOUNT_END, STATUS_AT, BALANCE_END = 70, 74, 104
 
 
 def _date(day: date) -> str:
-    return day.strftime("%d %b %Y")
+    return f"{day.day} {day:%b}, {day.year}"
 
 
 def _row(left: str, amount: str = "", status: str = "", balance: str = "") -> str:
@@ -36,13 +38,20 @@ def write_payoneer_statement(persona: Persona, out_dir: Path, password: str | No
     account = persona.accounts["payoneer"]
     rows = [t for t in transactions(persona) if t.account == "payoneer"]
     balance = account.opening
-    lines = []
+    blocks = []  # one per row, oldest first; printed newest first
     for t in rows:
         balance += t.amount_minor
         first, *rest = textwrap.wrap(t.description, DESCRIPTION_WIDTH)
         left = _date(t.date).ljust(DESCRIPTION_AT) + first
-        lines.append(_row(left, amount_text(t.amount_minor), "Completed", amount_text(balance)))
-        lines += [_row(" " * DESCRIPTION_AT + more) for more in rest]
+        amount = f"{amount_text(t.amount_minor)} {account.currency}"
+        status = "Completed" if t.amount_minor < 0 else ""  # only some rows show one
+        blocks.append(
+            [
+                _row(left, amount, status, amount_text(balance)),
+                *(_row(" " * DESCRIPTION_AT + more) for more in rest),
+            ]
+        )
+    lines = [line for block in reversed(blocks) for line in block]
     first_page = [
         COMPANY,
         "",
