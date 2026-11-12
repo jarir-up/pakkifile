@@ -18,7 +18,8 @@ from pathlib import Path
 from typing import get_args
 
 from pakkifile.vault.classify import Direction, RowClass
-from pakkifile.vault.meezan import MeezanRow, StatementError, parse_meezan, pdf_text
+from pakkifile.vault.meezan import parse_meezan
+from pakkifile.vault.statements import StatementError, StatementRow, pdf_text
 
 OUT = Path(__file__).resolve().parents[1] / "vault" / "memos-to-label.yaml"
 LIMIT = 30
@@ -26,7 +27,7 @@ CLASSES = " ".join((*get_args(RowClass), "none"))
 Memo = tuple[Direction, str]
 
 
-def distinct_memos(rows: tuple[MeezanRow, ...]) -> list[Memo]:
+def distinct_memos(rows: tuple[StatementRow, ...]) -> list[Memo]:
     """Distinct (direction, memo) pairs in statement order, digits replaced with 0."""
     seen: dict[Memo, None] = {}
     for row in rows:
