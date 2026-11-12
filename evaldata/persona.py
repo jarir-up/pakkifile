@@ -108,7 +108,7 @@ class Persona(_Frozen):
 
     @property
     def period_to(self) -> date:
-        return _month(self.period_from, self.months) - timedelta(days=1)
+        return month_start(self.period_from, self.months) - timedelta(days=1)
 
 
 class Transaction(_Frozen):
@@ -122,7 +122,7 @@ class Transaction(_Frozen):
 def transactions(persona: Persona) -> list[Transaction]:
     """Every dated transaction in the persona's period, in booking order."""
     dated = [
-        (line, _month(persona.period_from, month).replace(day=line.day), line.amount_in(month))
+        (line, month_start(persona.period_from, month).replace(day=line.day), line.amount_in(month))
         for line in persona.monthly
         for month in range(persona.months)
         if line.only_months is None or month in line.only_months
@@ -140,7 +140,7 @@ def transactions(persona: Persona) -> list[Transaction]:
     return sorted(out, key=lambda t: (t.account, t.date, -t.amount_minor, t.description))
 
 
-def _month(start: date, offset: int) -> date:
+def month_start(start: date, offset: int) -> date:
     index = start.month - 1 + offset
     return date(start.year + index // 12, index % 12 + 1, 1)
 
