@@ -10,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     MetaData,
+    Numeric,
     String,
     Table,
 )
@@ -82,4 +83,23 @@ row_correction = Table(
     Column("proposed_source", String),
     Column("chosen_class", String, nullable=False),
     Column("decided_at", DateTime(timezone=True), nullable=False),
+)
+
+# ADR-0057: one row per remittance an e-PRC or S-PRC proves. The rate is kept as printed and
+# never used for arithmetic (R-20). statement_row_id is null until a credit matches.
+prc_certificate = Table(
+    "prc_certificate",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("person_id", ForeignKey("person.id"), nullable=False),
+    Column("evidence_item_id", ForeignKey("evidence_item.id"), nullable=False),
+    Column("certificate_no", String, nullable=False),
+    Column("issued", Date, nullable=False),
+    Column("remitter", String, nullable=False),
+    Column("foreign_minor", BigInteger, nullable=False),
+    Column("foreign_currency", String(3), nullable=False),
+    Column("rate", Numeric),  # null when the remitting bank abroad applied it
+    Column("pkr_minor", BigInteger, nullable=False),
+    Column("purpose", String, nullable=False),
+    Column("statement_row_id", ForeignKey("statement_row.id")),
 )

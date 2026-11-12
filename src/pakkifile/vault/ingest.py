@@ -3,6 +3,7 @@
 import csv
 import hashlib
 import re
+from collections.abc import Callable
 from datetime import date
 from pathlib import Path
 
@@ -49,6 +50,28 @@ def store_evidence_item(conn: Connection, person_id: int, path: Path, sha256: st
     )
 
 
+def ingest_once[T](
+    conn: Connection,
+    person_id: int,
+    path: Path,
+    read: Callable[[], T],
+    store: Callable[[T, int], None],
+) -> int:
+    """Store a file for one person once, all or nothing (ADR-0028).
+
+    `read` parses the file before anything is written; `store` writes what it holds under
+    the new evidence item. A file this person already stored returns its existing item.
+    """
+    sha256 = file_sha256(path)
+    if (existing := stored_evidence_item(conn, person_id, sha256)) is not None:
+        return existing
+    parsed = read()
+    with conn.begin_nested():
+        item_id = store_evidence_item(conn, person_id, path, sha256)
+        store(parsed, item_id)
+    return item_id
+
+
 def _csv_row(person_id: int, item_id: int, r: dict[str, str]) -> dict[str, object]:
     amount_minor = int(r["amount_minor"])
     return {
@@ -65,11 +88,10 @@ def _csv_row(person_id: int, item_id: int, r: dict[str, str]) -> dict[str, objec
 
 
 def ingest_statement_csv(conn: Connection, person_id: int, path: Path) -> int:
-    data = path.read_bytes()
-    sha256 = file_sha256(path)
-    if (existing := stored_evidence_item(conn, person_id, sha256)) is not None:
-        return existing
-    item_id = store_evidence_item(conn, person_id, path, sha256)
-    rows = csv.DictReader(data.decode().splitlines())
-    conn.execute(insert(statement_row), [_csv_row(person_id, item_id, r) for r in rows])
-    return item_id
+    def store(rows: list[dict[str, str]], item_id: int) -> None:
+        conn.execute(insert(statement_row), [_csv_row(person_id, item_id, r) for r in rows])
+
+    def read() -> list[dict[str, str]]:
+        return list(csv.DictReader(path.read_bytes().decode().splitlines()))
+
+    return ingest_once(conn, person_id, path, read, store)
