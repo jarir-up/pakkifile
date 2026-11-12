@@ -7,8 +7,9 @@ Currency (as "Pakistan Rupee(PKR)"), From Date, To Date; Opening Balance, Closin
 Date, Description, Credit, Debit, Available Balance.
 
 Rows (confirmed 2026-11-11) read "02Jul 2024", a credit as "+ PKR248,500.00" and the balance as
-"PKR299,464.71". Not yet confirmed: a debit, written here as "- PKR1,000.00".
-Long descriptions wrap onto continuation lines, as bank narrations do.
+"PKR299,464.71".
+Long descriptions wrap onto continuation lines with the amounts on a line below them, as
+the owner's statement shows (2026-11-12): "- PKR50,000.00" for a debit.
 """
 
 import textwrap
@@ -76,15 +77,13 @@ def write_meezan_statement(
         first, *rest = textwrap.wrap(t.description, DESCRIPTION_WIDTH)
         credit = _money(t.amount_minor, code, "+") if t.amount_minor > 0 else ""
         debit = _money(-t.amount_minor, code, "-") if t.amount_minor < 0 else ""
-        lines.append(
-            _row(
-                f"{' ' * DATE_AT}{_date(t.date)}".ljust(DESCRIPTION_AT) + first,
-                credit,
-                debit,
-                _money(balance, code),
-            )
-        )
-        lines += [_row(" " * DESCRIPTION_AT + more) for more in rest]
+        dated = f"{' ' * DATE_AT}{_date(t.date)}".ljust(DESCRIPTION_AT) + first
+        amounts = (credit, debit, _money(balance, code))
+        if not rest:
+            lines.append(_row(dated, *amounts))
+        else:  # a wrapped narration puts its amounts on a line of their own, below it
+            lines += [_row(dated), *(_row(" " * DESCRIPTION_AT + more) for more in rest)]
+            lines.append(_row("", *amounts))
     first_page = [
         "SYNTHETIC STATEMENT - NOT A BANK DOCUMENT",
         "",

@@ -142,3 +142,65 @@ def test_a_long_account_title_keeps_each_value_with_its_label() -> None:
     parsed = parse_meezan(long)
     assert parsed.account_title == "SYN TEST AND SONS JOINT ACCOUNT HOLDERS"
     assert parsed.account_number == "00000009999999900000"
+
+
+def _table(rows: str, opening: str = "PKR269,749.77", closing: str = "PKR219,749.77") -> str:
+    """The real header with these balances, then `rows`, each "|"-separated part placed:
+    date, narration, or amounts right-aligned under Debit and Available Balance."""
+    text = REAL_HEADER.replace(
+        "PKR60,000.00                       PKR60,000.00",
+        f"{opening.ljust(35)}{closing}",
+    )
+    header = text.splitlines()[-1]
+    debit_end = header.index("Debit") + len("Debit")
+    balance_end = header.index("Available Balance") + len("Available Balance")
+    lines = []
+    for row in rows.strip().splitlines():
+        kind, _, value = row.partition("|")
+        if kind == "date":
+            lines.append(f"      {value}")
+        elif kind == "text":
+            lines.append(" " * 31 + value)
+        elif kind == "amounts":
+            debit, balance = value.split("|")
+            lines.append(debit.rjust(debit_end) + balance.rjust(balance_end - debit_end))
+        else:
+            lines.append(value)
+    return text + "\n".join(lines) + "\n"
+
+
+OWNER_ROW = """
+date|05Jul 2024               Money Transferred To SYN PERSON
+text|A C 0000-XXXX0000 STAN (0000000)
+amounts|- PKR50,000.00|PKR219,749.77
+"""
+
+
+def test_a_row_whose_amounts_sit_below_its_narration_reads_whole() -> None:
+    """The owner's debit row, 2026-11-12 (values replaced): date, two narration lines, amounts."""
+    (parsed,) = parse_meezan(_table(OWNER_ROW)).rows
+    assert parsed.description == "Money Transferred To SYN PERSON A C 0000-XXXX0000 STAN (0000000)"
+    assert (parsed.credit_minor, parsed.debit_minor) == (0, 5_000_000)
+    assert parsed.balance_minor == 21_974_977
+
+
+@pytest.mark.parametrize(
+    "between",
+    ["blank|", "blank|\nblank|                                                      Page 1 of 2"],
+)
+def test_amounts_after_a_blank_line_or_a_page_break_still_belong_to_the_row(between: str) -> None:
+    header = REAL_HEADER.strip().splitlines()[-1]
+    rows = OWNER_ROW.replace("amounts|", f"{between}\nraw|{header}\namounts|", 1)
+    (parsed,) = parse_meezan(_table(rows)).rows
+    assert (parsed.debit_minor, parsed.balance_minor) == (5_000_000, 21_974_977)
+
+
+def test_a_row_with_no_balance_stops_the_parse() -> None:
+    with pytest.raises(StatementError, match="row without a balance: 2024-07-05 Money"):
+        parse_meezan(_table(OWNER_ROW.replace("amounts|- PKR50,000.00|PKR219,749.77", "")))
+
+
+def test_two_amounts_in_one_column_stop_the_parse() -> None:
+    rows = OWNER_ROW + "amounts|- PKR1.00|PKR1.00\n"
+    with pytest.raises(StatementError, match="two amounts in the"):
+        parse_meezan(_table(rows))

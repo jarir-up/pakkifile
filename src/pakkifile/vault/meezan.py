@@ -4,7 +4,7 @@ Columns are found from the header line's positions, so a credit is never read as
 """
 
 import re
-from dataclasses import replace
+from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
@@ -85,6 +85,36 @@ def _amounts(line: str, ends: dict[str, int]) -> dict[str, int]:
     return found
 
 
+@dataclass
+class _OpenRow:
+    """A row while its lines are read: the date line, then any narration or amount lines."""
+
+    booked: date
+    words: list[str]
+    amounts: dict[str, int]
+
+    def add(self, text: str, amounts: dict[str, int]) -> None:
+        if words := _AMOUNT.sub("", text).strip():
+            self.words.append(words)
+        for column, amount in amounts.items():
+            if column in self.amounts:
+                raise StatementError(f"two amounts in the {column} column: {text.strip()}")
+            self.amounts[column] = amount
+
+    def closed(self, row_no: int) -> StatementRow:
+        description = " ".join(self.words)
+        if "Available Balance" not in self.amounts:
+            raise StatementError(f"row without a balance: {self.booked} {description}")
+        return StatementRow(
+            row_no=row_no,
+            booked=self.booked,
+            description=description,
+            credit_minor=self.amounts.get("Credit", 0),
+            debit_minor=self.amounts.get("Debit", 0),
+            balance_minor=self.amounts["Available Balance"],
+        )
+
+
 def parse_meezan(text: str) -> Statement:
     """Read a statement's text, or raise StatementError if it can't be read or doesn't add up."""
     lines = statement_lines(text)
@@ -106,8 +136,8 @@ def parse_meezan(text: str) -> Statement:
     except ValueError as error:
         raise StatementError(f"unreadable header field: {error}") from error
     ends = _column_ends(header)
-    date_end = 0  # where the last row's date ended; continuations leave that span blank
-    rows: list[StatementRow] = []
+    date_end = 0  # where the open row's date ended; its other lines leave that span blank
+    rows_read: list[_OpenRow] = []
     for line in lines:
         if _is_header(line):  # repeats on every page, where columns may sit differently
             ends = _column_ends(line)
@@ -116,22 +146,11 @@ def parse_meezan(text: str) -> Statement:
             continue
         if date_match := _DATE.match(line):
             date_end = date_match.end()
-            amounts = _amounts(line, ends)
-            if "Available Balance" not in amounts:
-                raise StatementError(f"row without a balance: {line.strip()}")
-            rows.append(
-                StatementRow(
-                    row_no=len(rows) + 1,
-                    booked=_day(date_match.group(1)),
-                    description=_AMOUNT.sub("", line[date_match.end() :]).strip(),
-                    credit_minor=amounts.get("Credit", 0),
-                    debit_minor=amounts.get("Debit", 0),
-                    balance_minor=amounts["Available Balance"],
-                )
-            )
-        elif rows and line[:date_end].strip() == "" and not _AMOUNT.search(line):
-            last = rows[-1]  # a narration continued on the next line
-            rows[-1] = replace(last, description=f"{last.description} {line.strip()}")
+            rows_read.append(_OpenRow(_day(date_match.group(1)), [], {}))
+            rows_read[-1].add(line[date_end:], _amounts(line, ends))
+        elif rows_read and line[:date_end].strip() == "":
+            rows_read[-1].add(line, _amounts(line, ends))  # narration or amounts on a later line
+    rows = [row.closed(number) for number, row in enumerate(rows_read, start=1)]
 
     return checked(
         Statement(
