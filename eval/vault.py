@@ -30,9 +30,9 @@ from pakkifile.vault.meezan import ingest_meezan_pdf
 from pakkifile.vault.payoneer import ingest_payoneer_pdf
 from pakkifile.vault.schema import metadata, statement, statement_row
 
-# Proposed to the owner with the first numbers (#37); not yet approved.
+# Approved by the owner, 2026-11-12, from the first numbers (#37).
 # Each score must be at least, or (for rule_wrong) at most, its gate.
-PROPOSED_GATES = {
+GATES = {
     "parse_exact": ("at least", Decimal(1)),
     "stored_once": ("at least", Decimal(1)),
     "closing_exact": ("at least", Decimal(1)),
@@ -132,10 +132,10 @@ def evaluate(conn: Connection, personas: Iterable[Persona], out: Path) -> list[V
 
 
 def failures(scores: Sequence[VaultScore]) -> list[str]:
-    """Each proposed gate a persona misses."""
+    """Each gate a persona misses."""
     found = []
     for s in scores:
-        for name, (bound, gate) in PROPOSED_GATES.items():
+        for name, (bound, gate) in GATES.items():
             value: Decimal = getattr(s, name)
             if (value > gate) if bound == "at most" else (value < gate):
                 found.append(f"{s.persona}: {name} {value}, gate {gate}")
@@ -160,7 +160,7 @@ def main() -> None:
         transaction.rollback()
     print("\n".join(_report(scores)))
     missed = failures(scores)
-    print("\n".join(missed) or "All proposed gates pass.")
+    print("\n".join(missed) or "All gates pass.")
     sys.exit(1 if missed else 0)
 
 

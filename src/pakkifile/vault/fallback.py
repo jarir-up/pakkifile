@@ -1,7 +1,7 @@
 """Send the rows the rules couldn't place to the local model, after ingestion (ADR-0056).
 
 A statement is stored without Ollama running; this pass runs whenever the model is there.
-Rows the model is unsure of, or can't place, stay flagged for the applicant's review.
+Every row still waits for the applicant; the review page lists the uncertain ones first.
 """
 
 from sqlalchemy import Connection, select, update
@@ -10,8 +10,6 @@ from pakkifile.llm.classify_row import classify_memo
 from pakkifile.llm.ollama import LocalModel
 from pakkifile.vault.classify import Direction
 from pakkifile.vault.schema import statement_row
-
-REVIEW_BELOW = 0.8  # a model class with less confidence than this goes to review
 
 
 def classify_pending(conn: Connection, person_id: int, model: LocalModel) -> int:
@@ -34,7 +32,6 @@ def classify_pending(conn: Connection, person_id: int, model: LocalModel) -> int
                 row_class=result.row_class,
                 class_source="model",
                 class_confidence=result.confidence,
-                needs_review=result.row_class is None or result.confidence < REVIEW_BELOW,
             )
         )
     return len(pending)

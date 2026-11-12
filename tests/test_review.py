@@ -48,8 +48,9 @@ def _row_id(db: Connection) -> int:
 
 
 def test_only_this_persons_rows_awaiting_review_are_listed(db: Connection, person: int) -> None:
-    (row,) = awaiting_review(db, person)
+    row, *rest = awaiting_review(db, person)  # the uncertain one first, then every other row
     assert (row.description, row.proposed, row.source) == (AMBIGUOUS, "spending", "model")
+    assert rest and {r.source for r in rest} == {"rule"}
     assert awaiting_review(db, add_person(db, "applicant")) == []
 
 
@@ -66,7 +67,7 @@ def test_a_decision_is_stored_as_evaluation_data_and_leaves_the_queue(
         "applicant",
         False,
     )
-    assert awaiting_review(db, person) == []
+    assert AMBIGUOUS not in [r.description for r in awaiting_review(db, person)]
 
 
 def test_another_persons_row_cannot_be_decided(db: Connection, person: int) -> None:
@@ -96,12 +97,23 @@ class LocalApp:
         with urllib.request.urlopen(self.url) as response:
             return str(response.read().decode())
 
+    def status(self, headers: dict[str, str]) -> int:
+        try:
+            with urllib.request.urlopen(urllib.request.Request(self.url, headers=headers)) as r:
+                return int(r.status)
+        except urllib.error.HTTPError as error:
+            return error.code
+
     def post(self, form: str) -> int:
-        request = urllib.request.Request(
-            self.url,
-            data=form.encode(),
-            headers={"content-type": "application/x-www-form-urlencoded"},
-        )
+        """Posts as the app's own page does."""
+        return self.post_from(form, self.url)
+
+    def post_from(self, form: str, origin: str | None) -> int:
+        """Posts with this Origin header, or with none."""
+        headers = {"content-type": "application/x-www-form-urlencoded"}
+        if origin is not None:
+            headers["origin"] = origin
+        request = urllib.request.Request(self.url, data=form.encode(), headers=headers)
         try:
             with urllib.request.build_opener(_NoRedirect).open(request) as response:
                 return int(response.status)
@@ -145,6 +157,18 @@ def test_a_stale_form_keeps_the_choices_still_waiting(client: LocalApp, db: Conn
     client.post(f"row-{row}=fee")
     assert client.post(f"row-{row}=tax&row-999999=fee&row-abc=fee&row-{row}x=fee") == 303
     assert db.scalars(select(row_correction.c.chosen_class)).all() == ["fee"]
+
+
+@pytest.mark.parametrize("origin", ["http://evil.example", None])
+def test_a_post_from_any_other_page_is_refused(
+    client: LocalApp, db: Connection, origin: str | None
+) -> None:
+    assert client.post_from(f"row-{_row_id(db)}=fee", origin) == 403
+    assert db.scalar(select(row_correction.c.id)) is None
+
+
+def test_a_request_for_another_host_name_is_refused(client: LocalApp) -> None:
+    assert client.status({"host": "evil.example"}) == 400
 
 
 def test_the_app_serves_this_machine_only() -> None:

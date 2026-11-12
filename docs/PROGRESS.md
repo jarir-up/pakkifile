@@ -4,15 +4,10 @@ What's done lives in closed issues and merged PRs. This file holds only what the
 
 ## Waiting on owner
 
-Q-1 to Q-15 settled 2026-10-30 (ADR-0012, 0030 to 0041; DESIGN.md; RULES R-22). Brief 05 questions settled 2026-11-10 (ADR-0049 to 0052).
+Q-1 to Q-15 settled 2026-10-30 (ADR-0012, 0030 to 0041; DESIGN.md; RULES R-22). Brief 05 questions settled 2026-11-10 (ADR-0049 to 0052) and 2026-11-12 (ADR-0057, model fallback, vault gates, one Save, page guards, every row reviewed).
 
 - **Portal walk bonuses (ADR-0047).** Pick any of the four extra earning options listed in the ADR.
-- **ADR-0056 `needs_review`.** Built as: rows the rules place are not flagged; ambiguous rows are, until the model or the applicant decides. The ADR's "true until the applicant decides" could also mean every row. Confirm, or reword the ADR.
-- **Model fallback (#33).** A model class under 0.8 confidence goes to review (`REVIEW_BELOW`); no ADR sets the number. The model is told whether money came in or went out, never the amount. Approve both or change them.
-- **ADR-0057 (ePRC and S-PRC storage, #35).** Approve or edit; also send one real ePRC's text from `pdftotext -layout`, numbers replaced. The parser waits for both.
-- **Vault gates (#37).** `uv run python -m eval.vault`, dev split, first numbers 2026-11-12: parse, stored-once and closing 100% for all three personas; rules right 100% / 100% / 97.8%, wrong 0, the student's sponsor transfer left ambiguous. Proposed gates: parse, stored-once and closing at 100%, rules wrong at 0. Approve or change. The test split waits for the persona review.
-- **Review page: one Save confirms every proposed class (#34).** Rows arrive with the proposal chosen, so Save records each as the applicant's decision. The other way is to start every row on `—`. Pick one.
-- **Review page: two unlikely attacks, not guarded (#34).** (1) A bad website open in your browser while the app runs could post the form and change classes on waiting rows. It can't read anything. Fix: about 5 lines checking the request came from the app's own page. (2) "DNS rebinding" could let a bad website read the review page, with real descriptions and amounts. It's rare and takes a deliberate attack on PakkiFile users. Fix: 1 line, accept only the 127.0.0.1 host name. Say yes to either or both.
+- **ADR-0058 (ePRC matching, #35).** A real certificate is dated months after its money arrived, so ADR-0057's matching would never match. ADR-0058 proposes matching on the date of realization. Approve or edit; the matching waits for it.
 - **Rules gate on GitHub Models.** The `rules` CI job is disabled for zero spend. Later, switch `scripts/rules_gate.py` to GitHub Models (free tier via `GITHUB_TOKEN`) and re-enable it. Until then, `/code-review` against `docs/RULES.md` before every commit is the only rules check.
 
 

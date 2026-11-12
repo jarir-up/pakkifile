@@ -10,9 +10,10 @@ from evaldata.persona import load_personas
 from pakkifile.llm.classify_row import ClassifyModel, classify_memo
 from pakkifile.llm.ollama import ModelError
 from pakkifile.vault import statements
-from pakkifile.vault.fallback import REVIEW_BELOW, classify_pending
+from pakkifile.vault.fallback import classify_pending
 from pakkifile.vault.ingest import add_person
 from pakkifile.vault.meezan import ingest_meezan_pdf
+from pakkifile.vault.review import REVIEW_BELOW, awaiting_review
 from pakkifile.vault.schema import statement_row
 from pakkifile.vault.statements import pdf_text
 from tests.helpers import FakeOllama
@@ -99,28 +100,31 @@ def test_only_rows_the_rules_left_reach_the_model(
     person = _ingest_with_one_ambiguous_row(db, tmp_path, monkeypatch)
     assert classify_pending(db, person, ollama.model) == 1
     assert len(ollama.requests) == 1
-    assert _row(db, AMBIGUOUS) == ("spending", "model", 0.95, False)
+    assert _row(db, AMBIGUOUS) == ("spending", "model", 0.95, True)
     assert _row(db, "ATM CASH WITHDRAWAL")[1] == "rule"
     assert classify_pending(db, person, ollama.model) == 0  # never sent twice
 
 
 @pytest.mark.parametrize(
-    ("reply", "expected"),
+    ("reply", "first"),
     [
-        ({"row_class": "spending", "confidence": REVIEW_BELOW - 0.01}, "spending"),
-        ({"row_class": "unclassified", "confidence": 0.9}, None),
+        ({"row_class": "spending", "confidence": REVIEW_BELOW - 0.01}, True),
+        ({"row_class": "unclassified", "confidence": 0.9}, True),
+        ({"row_class": "spending", "confidence": REVIEW_BELOW}, False),
     ],
 )
-def test_low_confidence_and_unclassified_rows_go_to_review(
+def test_every_row_waits_for_review_with_the_uncertain_ones_first(
     db: Connection,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     ollama: FakeOllama,
     reply: dict[str, object],
-    expected: str | None,
+    first: bool,
 ) -> None:
     person = _ingest_with_one_ambiguous_row(db, tmp_path, monkeypatch)
     ollama.content = json.dumps(reply)
     classify_pending(db, person, ollama.model)
-    row_class, source, _, needs_review = _row(db, AMBIGUOUS)
-    assert (row_class, source, needs_review) == (expected, "model", True)
+    queue = awaiting_review(db, person)
+    needs_review = [_row(db, row.description)[-1] for row in queue]  # last column selected
+    assert all(needs_review)
+    assert (queue[0].description == AMBIGUOUS) is first

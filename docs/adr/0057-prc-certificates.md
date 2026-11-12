@@ -1,6 +1,6 @@
 # ADR-0057: Where ePRC and S-PRC certificates are kept
 
-- Status: Proposed
+- Status: Approved (owner, 2026-11-12)
 
 ## Context
 Issue #35 reads ePRC and S-PRC certificates (FR-10) and links each to the statement credit it proves. FR-15 later checks statement totals against certificate totals. R-03 needs an approved ADR for the schema. No real certificate's layout has been supplied yet.

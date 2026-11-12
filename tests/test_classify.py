@@ -97,7 +97,7 @@ def test_ingested_rows_carry_their_rule_class(db: Connection, tmp_path: Path) ->
     ).all()
     labels = {t.description: t.row_class for t in transactions(persona) if t.account == "meezan"}
     assert stored and all(row.row_class == labels[row.description] for row in stored)
-    assert {(row.class_source, row.needs_review) for row in stored} == {("rule", False)}
+    assert {(row.class_source, row.needs_review) for row in stored} == {("rule", True)}
 
 
 def test_csv_rows_are_classified_on_ingest(db: Connection, tmp_path: Path) -> None:
