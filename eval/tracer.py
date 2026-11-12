@@ -8,7 +8,6 @@ fact table, never from the code under test. Exits non-zero if any stage fails.
 
 import argparse
 import dataclasses
-import os
 import sys
 from dataclasses import dataclass
 from datetime import date
@@ -17,7 +16,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 import yaml
-from sqlalchemy import Connection, create_engine
+from sqlalchemy import Connection
 
 from evaldata.statement import TRACER_EXPECTED_SHARE, TRACER_FACTS, write_statement
 from pakkifile.dossier.build import EvidenceLink, build_dossier
@@ -26,6 +25,7 @@ from pakkifile.mismatch.continuity import check_unattributed_credit
 from pakkifile.registry.files import load_registry
 from pakkifile.registry.model import RegistryEntry
 from pakkifile.sources.pipeline import TRACER_SOURCE, build_entry, same_entry, same_source
+from pakkifile.vault.db import vault_engine
 from pakkifile.vault.ingest import add_person, ingest_statement_csv
 from pakkifile.vault.schema import metadata
 from pakkifile.web.checklist import render_checklist
@@ -34,7 +34,6 @@ from pakkifile.web.dossier import render_dossier
 EXCERPT = Path("registry-data/sources/de-missions-pk-study-visa.html")
 REGISTRY = Path("registry-data")
 LABELS = Path("evaldata/labels/de-islamabad-study-d.yaml")
-DEFAULT_URL = "postgresql+psycopg://pakkifile:pakkifile@127.0.0.1:5433/pakkifile"
 TUITION = "proof-of-payment-of-tuition-fees"
 
 
@@ -170,7 +169,7 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=Path("build/tracer"))
     out = parser.parse_args().out
     out.mkdir(parents=True, exist_ok=True)
-    engine = create_engine(os.environ.get("PAKKIFILE_DATABASE_URL", DEFAULT_URL))
+    engine = vault_engine()
     with engine.connect() as conn:
         transaction = conn.begin()
         results = run(conn, out)
