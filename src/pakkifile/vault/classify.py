@@ -135,7 +135,7 @@ class ClassColumns(TypedDict):
 
 
 def rule_columns(description: str, amount_minor: int, account: AccountKind) -> ClassColumns:
-    """A row's class at ingestion (ADR-0056): rules only; an ambiguous row waits for review.
+    """A row's class at ingestion (ADR-0056): rules only. Every row waits for the applicant.
 
     Sponsor names aren't in the vault yet, so a named sponsor's transfer waits too.
     """
@@ -143,5 +143,5 @@ def rule_columns(description: str, amount_minor: int, account: AccountKind) -> C
     return {
         "row_class": row_class,
         "class_source": "rule" if row_class else None,
-        "needs_review": row_class is None,
+        "needs_review": True,  # owner, 2026-11-12: every row, until the applicant decides
     }

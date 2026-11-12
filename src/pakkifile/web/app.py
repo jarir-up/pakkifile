@@ -9,8 +9,9 @@ from urllib.parse import parse_qs
 
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import Connection
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from pakkifile.figures.money import Money
 from pakkifile.vault.classify import RowClass
@@ -31,6 +32,9 @@ def create_app(
 ) -> FastAPI:
     """`connect` opens one transaction per request; `person_id` is whose vault this is."""
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+    # Only this machine's names: a website can't reach the vault by pointing its own name
+    # at 127.0.0.1 (DNS rebinding). Approved by the owner, 2026-11-12.
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=[HOST, "localhost"])
 
     @app.get("/", response_class=HTMLResponse)
     def review_page() -> str:
@@ -41,8 +45,12 @@ def create_app(
             classes=CLASSES,
         )
 
-    @app.post("/")
-    async def save(request: Request) -> RedirectResponse:
+    @app.post("/", response_model=None)
+    async def save(request: Request) -> Response:
+        # Only the app's own page may save: another website can't post this form for you.
+        # The Host header is safe to compare against: the middleware above has checked it.
+        if request.headers.get("origin") != f"http://{request.headers.get('host')}":
+            return Response("Forbidden", status_code=403)
         form = parse_qs((await request.body()).decode())
         chosen = {
             int(field.removeprefix("row-")): values[0]

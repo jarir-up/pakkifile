@@ -7,10 +7,13 @@ The applicant's decision always wins: the row takes the chosen class with source
 from dataclasses import dataclass
 from datetime import date, datetime
 
-from sqlalchemy import Connection, insert, select, update
+from sqlalchemy import Connection, case, insert, select, update
 
 from pakkifile.vault.classify import RowClass
 from pakkifile.vault.schema import row_correction, statement_row
+
+# A model class with less confidence than this is uncertain (owner, 2026-11-12).
+REVIEW_BELOW = 0.8
 
 
 class ReviewError(ValueError):
@@ -28,7 +31,20 @@ class ReviewRow:
     source: str | None
 
 
+# Uncertain rows first: nothing placed them, or the model placed them with little confidence.
+_uncertain_first = case(
+    (statement_row.c.row_class.is_(None), 0),
+    (
+        (statement_row.c.class_source == "model")
+        & (statement_row.c.class_confidence < REVIEW_BELOW),
+        0,
+    ),
+    else_=1,
+)
+
+
 def awaiting_review(conn: Connection, person_id: int) -> list[ReviewRow]:
+    """Every row the applicant hasn't decided, the uncertain ones first."""
     rows = conn.execute(
         select(
             statement_row.c.id,
@@ -40,7 +56,7 @@ def awaiting_review(conn: Connection, person_id: int) -> list[ReviewRow]:
             statement_row.c.class_source,
         )
         .where(statement_row.c.person_id == person_id, statement_row.c.needs_review)
-        .order_by(statement_row.c.date, statement_row.c.id)
+        .order_by(_uncertain_first, statement_row.c.date, statement_row.c.id)
     ).all()
     return [ReviewRow(*row) for row in rows]
 
