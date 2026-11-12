@@ -64,9 +64,10 @@ def test_running_balances_that_do_not_add_up_stop_ingestion(
     shown, raised = amount_text(third), amount_text(third + 100)
     tampered = re.sub(rf"(?<![\d,]){re.escape(shown)}\b", raised, text, count=1)
     monkeypatch.setattr(statements, "pdf_text", lambda *_: tampered)
+    person = add_person(db, "applicant")
     with pytest.raises(StatementError, match=r"row 3: .*\(off by 100\)"):
-        ingest_payoneer_pdf(db, add_person(db, "applicant"), path)
-    assert db.scalar(select(func.count()).select_from(evidence_item)) == 0
+        ingest_payoneer_pdf(db, person, path)
+    assert db.scalar(select(func.count()).where(evidence_item.c.person_id == person)) == 0
 
 
 def test_ingest_stores_rows_in_the_account_currency_with_platform_classes(

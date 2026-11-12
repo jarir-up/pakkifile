@@ -64,9 +64,10 @@ def test_balances_that_do_not_add_up_stop_ingestion_and_store_nothing(
     path = write_meezan_statement(ALL["syn-dev-payoneer"], tmp_path)
     tampered = pdf_text(path).replace("745,000.00", "746,000.00", 1)
     monkeypatch.setattr(statements, "pdf_text", lambda *_: tampered)
+    person = add_person(db, "applicant")
     with pytest.raises(StatementError, match="off by 100000"):
-        ingest_meezan_pdf(db, add_person(db, "applicant"), path)
-    assert db.scalar(select(func.count()).select_from(evidence_item)) == 0
+        ingest_meezan_pdf(db, person, path)
+    assert db.scalar(select(func.count()).where(evidence_item.c.person_id == person)) == 0
 
 
 def test_page_footers_are_not_read_as_narration(tmp_path: Path) -> None:
@@ -87,7 +88,7 @@ def test_a_wrong_password_fails_and_stores_nothing(db: Connection, tmp_path: Pat
     person = add_person(db, "applicant")
     with pytest.raises(StatementError, match="password"):
         ingest_meezan_pdf(db, person, path, password="0000")
-    assert db.scalar(select(func.count()).select_from(statement)) == 0
+    assert db.scalar(select(func.count()).where(statement.c.person_id == person)) == 0
 
 
 # The real header's shape, from the owner's statement (values replaced with synthetic ones).

@@ -14,6 +14,7 @@ Q-1 to Q-15 settled 2026-10-30 (ADR-0012, 0030 to 0041; DESIGN.md; RULES R-22). 
 
 ## Broke
 
+- 2026-11-12: tests and the local vault share one database. Tests that counted every row failed once the vault held data (a demo ingest). All counts are now scoped to the test's own person or row; the suite passed with the demo data present before it was deleted.
 - Brief 01: `.gitignore`'s `vault/` (meant for real documents) also hid `src/pakkifile/vault/`; anchored to `/vault/`. Caught in review before any push.
 
 ## Next

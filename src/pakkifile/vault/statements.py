@@ -26,6 +26,10 @@ class StatementError(ValueError):
     """The statement can't be read in its format, or doesn't add up."""
 
 
+class PasswordError(StatementError):
+    """The file is password-protected and the password was missing or wrong."""
+
+
 @dataclass(frozen=True)
 class StatementRow:
     row_no: int
@@ -67,9 +71,18 @@ def pdf_text(path: Path, password: str | None = None) -> str:
     result = subprocess.run(args, capture_output=True, text=True)
     if result.returncode != 0:
         if "password" in result.stderr.lower():
-            raise StatementError(f"{path.name}: wrong or missing password")
+            raise PasswordError(f"{path.name}: wrong or missing password")
         raise StatementError(f"{path.name}: unreadable PDF ({result.stderr.strip()})")
     return result.stdout
+
+
+def read_pdf(path: Path, ask: Callable[[Path], str | None]) -> tuple[str, str | None]:
+    """The file's text and the password it took; `ask` is called only if it has one."""
+    try:
+        return pdf_text(path), None
+    except PasswordError:
+        password = ask(path)
+        return pdf_text(path, password), password
 
 
 def checked(parsed: Statement) -> Statement:

@@ -42,6 +42,14 @@ def person(db: Connection, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> i
     return person
 
 
+def _chosen(db: Connection) -> list[str]:
+    """The classes chosen for this test's row: other people's decisions never count."""
+    query = select(row_correction.c.chosen_class).where(
+        row_correction.c.statement_row_id == _row_id(db)
+    )
+    return list(db.scalars(query))
+
+
 def _row_id(db: Connection) -> int:
     query = select(statement_row.c.id).where(statement_row.c.description == AMBIGUOUS)
     return int(db.execute(query).scalar_one())
@@ -58,7 +66,9 @@ def test_a_decision_is_stored_as_evaluation_data_and_leaves_the_queue(
     db: Connection, person: int
 ) -> None:
     decide(db, person, _row_id(db), "sponsor_transfer", NOW)
-    correction = db.execute(select(row_correction)).one()
+    correction = db.execute(
+        select(row_correction).where(row_correction.c.statement_row_id == _row_id(db))
+    ).one()
     assert (correction.proposed_class, correction.proposed_source) == ("spending", "model")
     assert (correction.chosen_class, correction.decided_at) == ("sponsor_transfer", NOW)
     stored = db.execute(select(statement_row).where(statement_row.c.id == _row_id(db))).one()
@@ -142,13 +152,13 @@ def test_saving_stores_each_decision_and_the_row_leaves_the_page(
     client: LocalApp, db: Connection
 ) -> None:
     assert client.post(f"row-{_row_id(db)}=fee") == 303
-    assert db.scalar(select(row_correction.c.chosen_class)) == "fee"
+    assert _chosen(db) == ["fee"]
     assert AMBIGUOUS not in client.get()
 
 
 def test_a_row_left_undecided_stays_in_the_queue(client: LocalApp, db: Connection) -> None:
     client.post(f"row-{_row_id(db)}=")
-    assert db.scalar(select(row_correction.c.id)) is None
+    assert _chosen(db) == []
     assert AMBIGUOUS in client.get()
 
 
@@ -156,7 +166,7 @@ def test_a_stale_form_keeps_the_choices_still_waiting(client: LocalApp, db: Conn
     row = _row_id(db)
     client.post(f"row-{row}=fee")
     assert client.post(f"row-{row}=tax&row-999999=fee&row-abc=fee&row-{row}x=fee") == 303
-    assert db.scalars(select(row_correction.c.chosen_class)).all() == ["fee"]
+    assert _chosen(db) == ["fee"]
 
 
 @pytest.mark.parametrize("origin", ["http://evil.example", None])
@@ -164,7 +174,7 @@ def test_a_post_from_any_other_page_is_refused(
     client: LocalApp, db: Connection, origin: str | None
 ) -> None:
     assert client.post_from(f"row-{_row_id(db)}=fee", origin) == 403
-    assert db.scalar(select(row_correction.c.id)) is None
+    assert _chosen(db) == []
 
 
 def test_a_request_for_another_host_name_is_refused(client: LocalApp) -> None:

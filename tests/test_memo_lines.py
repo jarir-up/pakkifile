@@ -39,7 +39,7 @@ def test_the_label_file_reads_back_every_memo_exactly(
 ) -> None:
     memo = """IBFT O'BRIEN "RENT" back\\slash"""
     monkeypatch.setattr(memo_lines, "OUT", tmp_path / "memos.yaml")
-    monkeypatch.setattr(memo_lines, "pdf_text", lambda *_: "")
+    monkeypatch.setattr(memo_lines, "read_pdf", lambda *_: ("", None))
     monkeypatch.setattr(
         memo_lines,
         "parse_meezan",
@@ -57,7 +57,7 @@ def test_an_unreadable_statement_stops_with_its_reason(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(memo_lines, "OUT", tmp_path / "memos.yaml")
-    monkeypatch.setattr(memo_lines, "pdf_text", lambda *_: "not a statement")
+    monkeypatch.setattr(memo_lines, "read_pdf", lambda *_: ("not a statement", None))
     monkeypatch.setattr(sys, "argv", ["memo_lines", "statement.pdf"])
     with pytest.raises(SystemExit, match=r"Can't read statement\.pdf: not a Meezan"):
         memo_lines.main()
