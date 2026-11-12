@@ -1,8 +1,9 @@
 """Payoneer PDF statements (ADR-0054).
 
-The header has no opening or closing balance, so they come from the running balance: the
-first row's balance before it, and the last row's after it. Every row in between must add up.
-The layout guesses still to confirm are listed in `evaldata/payoneer.py`.
+Rows are printed newest first (owner, 2026-11-12) and stored oldest first. The header has no
+opening or closing balance, so they come from the running balance: the oldest row's balance
+before it, and the newest row's after it. Every row in between must add up. The layout
+guesses still to confirm are listed in `evaldata/payoneer.py`.
 """
 
 import re
@@ -23,21 +24,22 @@ from pakkifile.vault.statements import (
     statement_lines,
 )
 
-_DAY = r"\d{2} [A-Z][a-z]{2} \d{4}"
+_DAY = r"\d{1,2} [A-Z][a-z]{2}, \d{4}"  # "19 Sep, 2024"
 _FIELD = re.compile(
     r"^\s*(Primary Account Number|Account Currency|Period|Issuing Date):\s*(.+?)\s*$"
 )
 _PERIOD = re.compile(rf"({_DAY}) - ({_DAY})")
+# "-12.00 USD Completed 88.00": the amount carries its currency; some rows have no status.
 _ROW = re.compile(
-    rf"^\s*(?P<day>{_DAY})\s{{2,}}(?P<description>.+?)\s{{2,}}(?P<amount>-?[\d,]+\.\d{{2}})"
-    r"\s{2,}(?P<status>\S.*?)\s{2,}(?P<balance>-?[\d,]+\.\d{2})\s*$"
+    rf"^\s*(?P<day>{_DAY})\s+(?P<description>.+?)\s+(?P<amount>-?[\d,]+\.\d{{2}}) (?P<code>[A-Z]{{3}})"
+    r"(?:\s+(?P<status>[A-Za-z][A-Za-z -]*?))?\s+(?P<balance>-?[\d,]+\.\d{2})\s*$"
 )
 _COLUMNS = ("Date", "Description", "Amount", "Status", "Running Balance")
 _COMPLETED = "Completed"  # any other status may not have moved the balance
 
 
 def _day(text: str) -> date:
-    return datetime.strptime(text, "%d %b %Y").date()
+    return datetime.strptime(text, "%d %b, %Y").date()
 
 
 def _is_header(line: str) -> bool:
@@ -73,8 +75,10 @@ def parse_payoneer(text: str) -> Statement:
         if description_at is None or not line.strip() or is_page_footer(line):
             continue
         if match := _ROW.match(line):
-            if match["status"] != _COMPLETED:
+            if match["status"] not in (None, _COMPLETED):
                 raise StatementError(f"row status {match['status']!r}, not {_COMPLETED!r}")
+            if match["code"] != currency:
+                raise StatementError(f"a {match['code']} row on a {currency} statement: {line}")
             amount = parse_minor(match["amount"])
             rows.append(
                 StatementRow(
@@ -91,9 +95,14 @@ def parse_payoneer(text: str) -> Statement:
             rows[-1] = replace(last, description=f"{last.description} {line.strip()}")
         else:
             raise StatementError(f"unreadable row: {line.strip()}")
+    if description_at is None:
+        raise StatementError("no Date, Description, Amount, Status, Running Balance header")
     if not rows:
         raise StatementError("no transactions, so the balance is unknown")
-    first = rows[0]
+    if rows[0].booked < rows[-1].booked:
+        raise StatementError("rows run oldest first; Payoneer prints them newest first")
+    oldest_first = [replace(row, row_no=n) for n, row in enumerate(reversed(rows), start=1)]
+    first = oldest_first[0]
     opening = first.balance_minor - net_minor(first.credit_minor, first.debit_minor)
     return checked(
         Statement(
@@ -104,8 +113,8 @@ def parse_payoneer(text: str) -> Statement:
             period_from,
             period_to,
             opening,
-            rows[-1].balance_minor,
-            tuple(rows),
+            oldest_first[-1].balance_minor,
+            tuple(oldest_first),
         )
     )
 

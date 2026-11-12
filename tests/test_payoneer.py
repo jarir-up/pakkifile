@@ -92,7 +92,7 @@ def test_ingest_stores_rows_in_the_account_currency_with_platform_classes(
 def test_a_statement_with_no_rows_is_refused_since_its_balance_is_unknown() -> None:
     header = (
         "SYN PLATFORM\nSYN HOLDER\nPrimary Account Number: SYN-1\nAccount Currency: USD\n"
-        "Period: 01 Apr 2026 - 30 Apr 2026\nIssuing Date: 01 May 2026\n"
+        "Period: 1 Apr, 2026 - 30 Apr, 2026\nIssuing Date: 1 May, 2026\n"
         "Date        Description        Amount    Status    Running Balance\n"
     )
     with pytest.raises(StatementError, match="no transactions"):
@@ -114,3 +114,48 @@ def test_unknown_text_after_the_table_stops_rather_than_join_a_description(
     footer = "      Synthetic platform footer, not part of any row"
     with pytest.raises(StatementError, match="unreadable row: Synthetic platform footer"):
         parse_payoneer(text.replace("Page 1 of 1", f"{footer}\nPage 1 of 1"))
+
+
+# The real row shape (owner, 2026-11-12), values replaced: newest first, the amount with its
+# currency, a status only on some rows, the running balance last.
+REAL_ROWS = """SYN PLATFORM
+SYN HOLDER
+Primary Account Number: SYN-1
+Account Currency: USD
+Period: 1 Feb, 2024 - 29 Feb, 2024
+Issuing Date: 1 Mar, 2024
+Date          Description                              Amount       Status      Running Balance
+27 Feb, 2024  Payment from SYN CLIENT Inc.             188.40 USD                    454.20
+21 Feb, 2024  Withdrawal to SYN BANK (0000)            -150.00 USD  Completed        265.80
+21 Feb, 2024  Payment from SYN CLIENT Inc.             412.50 USD                    415.80
+19 Feb, 2024  Payment from SYN CLIENT Inc.             3.30 USD                        3.30
+"""
+
+
+def test_the_real_row_layout_reads_oldest_first() -> None:
+    parsed = parse_payoneer(REAL_ROWS)
+    assert [(r.row_no, r.booked.day, r.credit_minor - r.debit_minor) for r in parsed.rows] == [
+        (1, 19, 330),
+        (2, 21, 41_250),
+        (3, 21, -15_000),
+        (4, 27, 18_840),
+    ]
+    assert (parsed.opening_minor, parsed.closing_minor) == (0, 45_420)
+    assert parsed.rows[2].description == "Withdrawal to SYN BANK (0000)"
+
+
+def test_a_row_in_another_currency_stops_the_parse() -> None:
+    with pytest.raises(StatementError, match="GBP"):
+        parse_payoneer(REAL_ROWS.replace("188.40 USD", "188.40 GBP"))
+
+
+def test_rows_printed_oldest_first_stop_the_parse() -> None:
+    header, table = REAL_ROWS.split("Running Balance\n")
+    oldest_first = "\n".join(reversed(table.strip().splitlines()))
+    with pytest.raises(StatementError, match="oldest first"):
+        parse_payoneer(f"{header}Running Balance\n{oldest_first}\n")
+
+
+def test_a_statement_without_its_table_header_says_so() -> None:
+    with pytest.raises(StatementError, match=r"no Date, .*, Running Balance header"):
+        parse_payoneer(REAL_ROWS.replace("Running Balance", ""))
