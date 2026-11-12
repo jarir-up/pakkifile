@@ -101,7 +101,7 @@ def _check_numbers(items: tuple[ExtractedItem, ...], document: str) -> None:
             raise ExtractionError(f"numbers not in the source: {sorted(invented)}: {item.text}")
 
 
-def extract_requirements(text: str, model: ExtractionModel) -> tuple[ExtractedItem, ...]:
+def extract_requirements(text: str, model: LocalModel) -> tuple[ExtractedItem, ...]:
     body: dict[str, Any] = {
         "format": _Output.model_json_schema(),
         "options": {"temperature": 0, "seed": 0, "num_ctx": NUM_CTX, "num_predict": 8000},

@@ -38,7 +38,10 @@ class Reply:
 
 
 def chat(model: LocalModel, body: dict[str, Any]) -> Reply:
-    """Send one chat request; `body` gets the model's name and thinking setting."""
+    """Send one chat request; `body` gets the model's name and thinking setting.
+
+    Applicant text must pass through `llm.redact` before it is put in `body` (R-27).
+    """
     body = {**body, "model": model.name, "stream": False}
     if model.think is not None:
         body["think"] = model.think
