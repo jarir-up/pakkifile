@@ -43,15 +43,22 @@ def spread(items: list[Memo], limit: int = LIMIT) -> list[Memo]:
     return [items[i * len(items) // limit] for i in range(limit)]
 
 
-def main() -> None:
-    path = Path(sys.argv[1])
+def _read(path: Path) -> str:
+    """The statement's text, asking for its password only if it has one."""
     try:
-        text = pdf_text(path)
+        return pdf_text(path)
     except StatementError as error:
         if "password" not in str(error):
             raise
-        text = pdf_text(path, getpass.getpass(f"Password for {path.name}: "))
-    memos = distinct_memos(parse_meezan(text).rows)
+        return pdf_text(path, getpass.getpass(f"Password for {path.name}: "))
+
+
+def main() -> None:
+    path = Path(sys.argv[1])
+    try:
+        memos = distinct_memos(parse_meezan(_read(path)).rows)
+    except StatementError as error:
+        sys.exit(f"Can't read {path.name}: {error}")
     picked = spread(memos)
     entries = "".join(
         f"- direction: {direction}\n  memo: {json.dumps(memo)}\n  class:\n"

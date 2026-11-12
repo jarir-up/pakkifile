@@ -51,3 +51,14 @@ def test_the_label_file_reads_back_every_memo_exactly(
     memo_lines.main()
     (entry,) = yaml.safe_load((tmp_path / "memos.yaml").read_text())
     assert entry == {"direction": "debit", "memo": memo, "class": None}
+
+
+def test_an_unreadable_statement_stops_with_its_reason(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(memo_lines, "OUT", tmp_path / "memos.yaml")
+    monkeypatch.setattr(memo_lines, "pdf_text", lambda *_: "not a statement")
+    monkeypatch.setattr(sys, "argv", ["memo_lines", "statement.pdf"])
+    with pytest.raises(SystemExit, match=r"Can't read statement\.pdf: not a Meezan"):
+        memo_lines.main()
+    assert not (tmp_path / "memos.yaml").exists()
