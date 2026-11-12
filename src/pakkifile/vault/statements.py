@@ -5,6 +5,7 @@ never stored (ADR-0053). Each format's parser turns text into a `Statement`; sto
 the same for every format.
 """
 
+import re
 import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -49,6 +50,16 @@ class Statement:
 
 
 Parser = Callable[[str], Statement]
+_PAGE = re.compile(r"Page \d+ of \d+")
+
+
+def statement_lines(text: str) -> list[str]:
+    """pdftotext's lines, without the form feeds between pages."""
+    return [line.replace("\f", "") for line in text.splitlines()]
+
+
+def is_page_footer(line: str) -> bool:
+    return bool(_PAGE.fullmatch(line.strip()))
 
 
 def pdf_text(path: Path, password: str | None = None) -> str:

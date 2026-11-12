@@ -15,7 +15,7 @@ import textwrap
 from datetime import date
 from pathlib import Path
 
-from evaldata.pdf import encrypt, paginate, write_pdf
+from evaldata.pdf import ADDRESS, amount_text, encrypt, paginate, write_pdf
 from evaldata.persona import Persona, transactions
 
 DESCRIPTION_WIDTH = 32
@@ -23,7 +23,6 @@ DESCRIPTION_WIDTH = 32
 DATE_AT, DESCRIPTION_AT = 5, 19
 CREDIT_END, DEBIT_END, BALANCE_END = 70, 89, 108
 GRID = (26, 22, 30)  # widths of the header grid's first three columns
-ADDRESS = "House 0, Synthetic Town"
 CURRENCY_NAMES = {"PKR": "Pakistan Rupee"}
 
 
@@ -40,15 +39,9 @@ def _grid(*cells: tuple[str, str]) -> list[str]:
     return [labels.rstrip(), values.rstrip(), "", ""]
 
 
-def _amount(minor: int) -> str:
-    sign = "-" if minor < 0 else ""
-    major, cents = divmod(abs(minor), 100)
-    return f"{sign}{major:,}.{cents:02d}"
-
-
 def _money(minor: int, code: str, sign: str = "") -> str:
     """As the statement prints it: "PKR60,964.71", or "+ PKR248,500.00" in a row."""
-    return f"{sign} {code}{_amount(minor)}" if sign else f"{code}{_amount(minor)}"
+    return f"{sign} {code}{amount_text(minor)}" if sign else f"{code}{amount_text(minor)}"
 
 
 def _row(left: str, credit: str = "", debit: str = "", balance: str = "") -> str:

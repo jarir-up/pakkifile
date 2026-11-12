@@ -18,6 +18,7 @@ Q-1 to Q-15 settled 2026-10-30 (ADR-0012, 0030 to 0041; DESIGN.md; RULES R-22). 
 
 ## Next
 
+- Payoneer rows: confirm against one real statement (header lines, one row from `pdftotext -layout`). Guessed: "Label: value" header, "03 Apr 2026" dates, signed amounts, "Completed" status, oldest first. Any other status stops ingestion; keeping pending rows needs a status column (ADR).
 - Sponsor names: ingestion passes none to the rules (the vault doesn't store them), so a named sponsor's transfer waits for review. Pass them once the vault holds sponsors.
 - Review page (#34): re-running rules must never overwrite a row the applicant decided (ADR-0056); `row_correction` is added there, where it is first written.
 

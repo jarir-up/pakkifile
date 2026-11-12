@@ -17,6 +17,8 @@ from pakkifile.vault.statements import (
     StatementRow,
     checked,
     ingest_pdf,
+    is_page_footer,
+    statement_lines,
 )
 
 # The header is a grid: a line of these labels, then their values on the next line.
@@ -38,7 +40,6 @@ _CURRENCY = re.compile(r"\(([A-Z]{3})\)$")
 # "560,000.00", "PKR560,000.00" or "+ PKR560,000.00": the column, not the sign, says credit.
 _AMOUNT = re.compile(r"(?:[+-] ?)?(?:\b[A-Z]{3})?(-?[\d,]+\.\d{2})")
 _COLUMNS = ("Credit", "Debit", "Available Balance")
-_PAGE = re.compile(r"Page \d+ of \d+")
 
 
 def _day(text: str) -> date:
@@ -86,7 +87,7 @@ def _amounts(line: str, ends: dict[str, int]) -> dict[str, int]:
 
 def parse_meezan(text: str) -> Statement:
     """Read a statement's text, or raise StatementError if it can't be read or doesn't add up."""
-    lines = [line.replace("\f", "") for line in text.splitlines()]
+    lines = statement_lines(text)
     fields = _header_fields(lines)
     header = next((line for line in lines if _is_header(line)), None)
     if header is None:
@@ -111,7 +112,7 @@ def parse_meezan(text: str) -> Statement:
         if _is_header(line):  # repeats on every page, where columns may sit differently
             ends = _column_ends(line)
             continue
-        if not line.strip() or _PAGE.fullmatch(line.strip()):
+        if not line.strip() or is_page_footer(line):
             continue
         if date_match := _DATE.match(line):
             date_end = date_match.end()
@@ -150,4 +151,5 @@ def parse_meezan(text: str) -> Statement:
 def ingest_meezan_pdf(
     conn: Connection, person_id: int, path: Path, password: str | None = None
 ) -> int:
+    """Store a Meezan statement and its new rows for one person, all or nothing."""
     return ingest_pdf(conn, person_id, path, parse_meezan, "bank", password)
