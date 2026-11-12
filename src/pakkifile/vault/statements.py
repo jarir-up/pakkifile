@@ -18,7 +18,7 @@ from pakkifile.figures.money import net_minor
 from pakkifile.figures.reconcile import balance_gaps
 from pakkifile.vault.classify import AccountKind, rule_columns
 from pakkifile.vault.dedupe import IncomingRow, StoredRow, fingerprint, sort_rows
-from pakkifile.vault.ingest import file_sha256, store_evidence_item, stored_evidence_item
+from pakkifile.vault.ingest import ingest_once
 from pakkifile.vault.schema import statement, statement_row
 
 
@@ -88,17 +88,10 @@ def ingest_pdf(
     account: AccountKind,
     password: str | None = None,
 ) -> int:
-    """Store a statement and its new rows for one person, all or nothing (ADR-0028).
+    """Store a statement and its new rows for one person, all or nothing (ADR-0028)."""
 
-    A file this person already stored returns its existing evidence item.
-    """
-    sha256 = file_sha256(path)
-    if (existing := stored_evidence_item(conn, person_id, sha256)) is not None:
-        return existing
-    parsed = parse(pdf_text(path, password))
-    with conn.begin_nested():
+    def store(parsed: Statement, item_id: int) -> None:
         stored = _stored_rows(conn, person_id, parsed)
-        item_id = store_evidence_item(conn, person_id, path, sha256)
         conn.execute(
             insert(statement).values(
                 person_id=person_id,
@@ -147,7 +140,8 @@ def ingest_pdf(
                     for row in new
                 ],
             )
-    return item_id
+
+    return ingest_once(conn, person_id, path, lambda: parse(pdf_text(path, password)), store)
 
 
 def _stored_rows(conn: Connection, person_id: int, parsed: Statement) -> list[StoredRow]:
