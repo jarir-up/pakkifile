@@ -32,6 +32,7 @@ All text tokens pass WCAG AA against `--bg` (6.3:1 or higher).
 ## Components
 Each component is added here the first time an issue builds it, and the owner approves it in that PR's diff. New UI reuses these before adding new ones.
 
+- **Review table**: rows awaiting review as Date, Description, Amount, Class. Each Class is a menu with the proposed class chosen, or `—` when nothing proposed one. One `Save` button below the table stores every row given a class; a row left on `—` stays.
 - **Full-list link**: one paragraph above a checklist table, `Full list: <portal name>` linking to where the authority publishes the rest. Shown only when the entry records one.
 
 ## Screen rules

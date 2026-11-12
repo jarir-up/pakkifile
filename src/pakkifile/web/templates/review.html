@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Review{% endblock %}
+{% block main %}
+<h1>Review</h1>
+{% if rows %}
+<form method="post" action="/">
+<table>
+<thead><tr><th>Date</th><th>Description</th><th>Amount</th><th>Class</th></tr></thead>
+<tbody>
+{% for row, amount in rows %}
+<tr>
+<td class="figure">{{ row.booked.isoformat() }}</td>
+<td>{{ row.description }}</td>
+<td class="figure">{{ amount }}</td>
+<td>
+<select name="row-{{ row.id }}" aria-label="Class for {{ row.description }}">
+<option value=""{% if not row.proposed %} selected{% endif %}>—</option>
+{% for name in classes %}
+<option value="{{ name }}"{% if name == row.proposed %} selected{% endif %}>{{ name | replace("_", " ") }}</option>
+{% endfor %}
+</select>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<p><button type="submit">Save</button></p>
+</form>
+{% else %}
+<p>Nothing to review.</p>
+{% endif %}
+{% endblock %}

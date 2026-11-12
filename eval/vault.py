@@ -10,7 +10,6 @@ Only the dev split exists so far; a test split, with other templates and instanc
 for the owner's review of a wider persona set.
 """
 
-import os
 import sys
 import tempfile
 from collections import Counter
@@ -20,17 +19,17 @@ from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 
-from sqlalchemy import Connection, create_engine, select
+from sqlalchemy import Connection, select
 
 from evaldata.meezan import write_meezan_statement
 from evaldata.payoneer import write_payoneer_statement
 from evaldata.persona import Persona, load_personas, month_start, transactions
+from pakkifile.vault.db import vault_engine
 from pakkifile.vault.ingest import add_person
 from pakkifile.vault.meezan import ingest_meezan_pdf
 from pakkifile.vault.payoneer import ingest_payoneer_pdf
 from pakkifile.vault.schema import metadata, statement, statement_row
 
-DEFAULT_URL = "postgresql+psycopg://pakkifile:pakkifile@127.0.0.1:5433/pakkifile"
 # Proposed to the owner with the first numbers (#37); not yet approved.
 # Each score must be at least, or (for rule_wrong) at most, its gate.
 PROPOSED_GATES = {
@@ -153,7 +152,7 @@ def _report(scores: Sequence[VaultScore]) -> Iterable[str]:
 
 
 def main() -> None:
-    engine = create_engine(os.environ.get("PAKKIFILE_DATABASE_URL", DEFAULT_URL))
+    engine = vault_engine()
     with engine.connect() as conn, tempfile.TemporaryDirectory() as out:
         transaction = conn.begin()
         metadata.create_all(conn)

@@ -1,12 +1,10 @@
-import os
 from collections.abc import Iterator
 
 import pytest
-from sqlalchemy import Connection, create_engine
+from sqlalchemy import Connection
 
+from pakkifile.vault.db import vault_engine
 from pakkifile.vault.schema import metadata
-
-DEFAULT_URL = "postgresql+psycopg://pakkifile:pakkifile@127.0.0.1:5433/pakkifile"
 
 
 @pytest.fixture
@@ -15,7 +13,7 @@ def db() -> Iterator[Connection]:
 
     Start it with `docker compose up -d --wait db`.
     """
-    engine = create_engine(os.environ.get("PAKKIFILE_DATABASE_URL", DEFAULT_URL))
+    engine = vault_engine()
     with engine.connect() as conn:
         transaction = conn.begin()
         metadata.create_all(conn)

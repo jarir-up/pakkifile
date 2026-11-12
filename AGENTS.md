@@ -53,7 +53,7 @@ Don't install skills that duplicate what this repo already does. `.claude/settin
 | Fast checks only (lint, types) | `./scripts/check.sh --fast` |
 | Start the local database (tests need it) | `docker compose up -d --wait db` |
 | Build the checklist site | `uv run python -m pakkifile.web.site --out build/site` |
-| Run the app locally | Set by the first issue that adds a runnable app; record the command here |
+| Run the app locally (review page, 127.0.0.1:8000) | `uv run python -m pakkifile.web.app --person <id>` |
 
 Hooks run the fast checks after each edit and the full checks before you finish a turn with uncommitted changes. When a hook reports a failure, fix the cause; don't silence the check.
 

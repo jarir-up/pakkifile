@@ -5,6 +5,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     Date,
+    DateTime,
     Float,
     ForeignKey,
     Integer,
@@ -68,4 +69,17 @@ statement_row = Table(
     Column("class_source", String),
     Column("class_confidence", Float),  # the model's, 0 to 1; null for rules and the applicant
     Column("needs_review", Boolean, nullable=False),
+)
+
+# ADR-0056: each review decision, kept as evaluation data. It never leaves the machine.
+row_correction = Table(
+    "row_correction",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("person_id", ForeignKey("person.id"), nullable=False),
+    Column("statement_row_id", ForeignKey("statement_row.id"), nullable=False),
+    Column("proposed_class", String),  # null when nothing could place the row
+    Column("proposed_source", String),
+    Column("chosen_class", String, nullable=False),
+    Column("decided_at", DateTime(timezone=True), nullable=False),
 )

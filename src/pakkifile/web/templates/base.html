@@ -18,6 +18,14 @@ a { color: var(--accent); }
 table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 th, td { text-align: left; vertical-align: top; padding: var(--space-2); border-bottom: thin solid var(--line); }
 .figure { font-variant-numeric: tabular-nums; }
+select { font: inherit; color: var(--fg); background: var(--bg); border: thin solid var(--fg); padding: var(--space-1); }
+@media (max-width: 40em) { /* the DESIGN.md breakpoint (640) at the default font size */
+  thead { display: none; }
+  tr, td { display: block; }
+  tr { padding: var(--space-2) 0; border-bottom: thin solid var(--line); }
+  td { border: 0; padding: var(--space-1) 0; }
+}
+button { font: inherit; color: var(--bg); background: var(--accent); border: 0; padding: var(--space-2) var(--space-3); cursor: pointer; }
 </style>
 </head>
 <body>
