@@ -9,6 +9,7 @@ Q-1 to Q-15 settled 2026-10-30 (ADR-0012, 0030 to 0041; DESIGN.md; RULES R-22). 
 - **Portal walk bonuses (ADR-0047).** Pick any of the four extra earning options listed in the ADR.
 - **ADR-0056 `needs_review`.** Built as: rows the rules place are not flagged; ambiguous rows are, until the model or the applicant decides. The ADR's "true until the applicant decides" could also mean every row. Confirm, or reword the ADR.
 - **Model fallback (#33).** A model class under 0.8 confidence goes to review (`REVIEW_BELOW`); no ADR sets the number. The model is told whether money came in or went out, never the amount. Approve both or change them.
+- **ADR-0057 (ePRC and S-PRC storage, #35).** Approve or edit; also send one real ePRC's text from `pdftotext -layout`, numbers replaced. The parser waits for both.
 - **Rules gate on GitHub Models.** The `rules` CI job is disabled for zero spend. Later, switch `scripts/rules_gate.py` to GitHub Models (free tier via `GITHUB_TOKEN`) and re-enable it. Until then, `/code-review` against `docs/RULES.md` before every commit is the only rules check.
 
 
