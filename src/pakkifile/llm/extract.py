@@ -4,19 +4,14 @@ Only public official documents come through here. Fetched text reaches the promp
 only as delimited data (R-25).
 """
 
-import json
-import os
 import re
-import urllib.request
-from dataclasses import dataclass
 from typing import Any, Self
 
 from pydantic import BaseModel, ValidationError
 
+from pakkifile.llm.ollama import LocalModel, ModelError, chat
 from pakkifile.registry.model import ExtractedItem
 
-DEFAULT_URL = "http://127.0.0.1:11434"
-TIMEOUT_SECONDS = 3600
 NUM_CTX = 16384
 _NUMBER = re.compile(r"\d(?:[\d.,]*\d)?")
 
@@ -58,7 +53,7 @@ gives:
 - "Utility bills", mandatory"""
 
 
-class ExtractionError(Exception):
+class ExtractionError(ModelError):
     """The model was unavailable, or its output cannot be trusted as requirements."""
 
 
@@ -66,40 +61,30 @@ class _Output(BaseModel):
     requirements: tuple[ExtractedItem, ...]
 
 
-@dataclass(frozen=True)
-class ExtractionModel:
-    name: str
-    url: str = DEFAULT_URL
-    think: bool | None = None
-
+class ExtractionModel(LocalModel):
     @classmethod
-    def from_env(cls) -> Self:
-        name = os.environ.get("PAKKIFILE_EXTRACTION_MODEL")
-        if not name:
-            raise ExtractionError("PAKKIFILE_EXTRACTION_MODEL is not set")
-        think = {"on": True, "off": False}.get(os.environ.get("PAKKIFILE_EXTRACTION_THINK", ""))
-        return cls(name, os.environ.get("PAKKIFILE_OLLAMA_URL", DEFAULT_URL), think)
+    def from_env(
+        cls,
+        model_var: str = "PAKKIFILE_EXTRACTION_MODEL",
+        think_var: str = "PAKKIFILE_EXTRACTION_THINK",
+        think: bool | None = None,
+    ) -> Self:
+        try:
+            return super().from_env(model_var, think_var, think)
+        except ModelError as error:
+            raise ExtractionError(str(error)) from error
 
 
-def _chat(model: ExtractionModel, body: dict[str, Any]) -> str:
-    request = urllib.request.Request(
-        f"{model.url}/api/chat",
-        data=json.dumps(body).encode(),
-        headers={"content-type": "application/json"},
-    )
+def _chat(model: LocalModel, body: dict[str, Any]) -> str:
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-            reply = json.load(response)
-        content = str(reply["message"]["content"])
-        finished = reply["done_reason"]
-        prompt_tokens = reply.get("prompt_eval_count", 0)
-    except (OSError, KeyError, TypeError, ValueError) as error:
-        raise ExtractionError(f"{model.name}: no usable reply: {error!r}") from error
-    if finished == "length":
+        reply = chat(model, body)
+    except ModelError as error:
+        raise ExtractionError(str(error)) from error
+    if reply.finished == "length":
         raise ExtractionError(f"{model.name}: reply was cut off by the length limit")
-    if prompt_tokens >= NUM_CTX:
+    if reply.prompt_tokens >= NUM_CTX:
         raise ExtractionError(f"{model.name}: document is too long for the context window")
-    return content
+    return reply.content
 
 
 def _numbers(text: str) -> set[str]:
@@ -116,18 +101,14 @@ def _check_numbers(items: tuple[ExtractedItem, ...], document: str) -> None:
             raise ExtractionError(f"numbers not in the source: {sorted(invented)}: {item.text}")
 
 
-def extract_requirements(text: str, model: ExtractionModel) -> tuple[ExtractedItem, ...]:
+def extract_requirements(text: str, model: LocalModel) -> tuple[ExtractedItem, ...]:
     body: dict[str, Any] = {
-        "model": model.name,
-        "stream": False,
         "format": _Output.model_json_schema(),
         "options": {"temperature": 0, "seed": 0, "num_ctx": NUM_CTX, "num_predict": 8000},
         "messages": [
             {"role": "user", "content": f"{INSTRUCTIONS}\n\n<document>\n{text}\n</document>"},
         ],
     }
-    if model.think is not None:
-        body["think"] = model.think
     content = _chat(model, body)
     try:
         items = _Output.model_validate_json(content).requirements
