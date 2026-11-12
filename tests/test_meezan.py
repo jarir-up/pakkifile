@@ -8,10 +8,11 @@ from sqlalchemy import Connection, func, select
 
 from evaldata.meezan import write_meezan_statement
 from evaldata.persona import Persona, load_personas, transactions
-from pakkifile.vault import meezan
+from pakkifile.vault import statements
 from pakkifile.vault.ingest import add_person
-from pakkifile.vault.meezan import StatementError, ingest_meezan_pdf, parse_meezan, pdf_text
+from pakkifile.vault.meezan import ingest_meezan_pdf, parse_meezan
 from pakkifile.vault.schema import evidence_item, statement, statement_row
+from pakkifile.vault.statements import StatementError, pdf_text
 
 ALL = load_personas()
 WITH_MEEZAN = [p for p in ALL.values() if "meezan" in p.accounts]
@@ -62,7 +63,7 @@ def test_balances_that_do_not_add_up_stop_ingestion_and_store_nothing(
 ) -> None:
     path = write_meezan_statement(ALL["syn-dev-payoneer"], tmp_path)
     tampered = pdf_text(path).replace("745,000.00", "746,000.00", 1)
-    monkeypatch.setattr(meezan, "pdf_text", lambda *_: tampered)
+    monkeypatch.setattr(statements, "pdf_text", lambda *_: tampered)
     with pytest.raises(StatementError, match="off by 100000"):
         ingest_meezan_pdf(db, add_person(db, "applicant"), path)
     assert db.scalar(select(func.count()).select_from(evidence_item)) == 0

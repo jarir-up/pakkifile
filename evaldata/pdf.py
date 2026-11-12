@@ -8,11 +8,19 @@ import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 
+ADDRESS = "House 0, Synthetic Town"
 PAGE_W, PAGE_H = 595, 842  # A4 in points
 FONT_SIZE = 8
 LEADING = 11
 MARGIN = 36
 LINES_PER_PAGE = (PAGE_H - 2 * MARGIN) // LEADING
+
+
+def amount_text(minor: int) -> str:
+    """56000000 -> "560,000.00", as statements print amounts."""
+    sign = "-" if minor < 0 else ""
+    major, cents = divmod(abs(minor), 100)
+    return f"{sign}{major:,}.{cents:02d}"
 
 
 def _escape(line: str) -> str:

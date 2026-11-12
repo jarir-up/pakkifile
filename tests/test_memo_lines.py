@@ -7,11 +7,11 @@ import yaml
 
 from eval import memo_lines
 from eval.memo_lines import distinct_memos, spread
-from pakkifile.vault.meezan import MeezanRow, MeezanStatement
+from pakkifile.vault.statements import Statement, StatementRow
 
 
-def _row(description: str, credit: int = 0, debit: int = 0) -> MeezanRow:
-    return MeezanRow(1, date(2024, 7, 2), description, credit, debit, 0)
+def _row(description: str, credit: int = 0, debit: int = 0) -> StatementRow:
+    return StatementRow(1, date(2024, 7, 2), description, credit, debit, 0)
 
 
 def test_memos_are_masked_and_listed_once_per_direction() -> None:
@@ -43,7 +43,7 @@ def test_the_label_file_reads_back_every_memo_exactly(
     monkeypatch.setattr(
         memo_lines,
         "parse_meezan",
-        lambda _: MeezanStatement(
+        lambda _: Statement(
             "", "", None, "PKR", date(2024, 7, 1), date(2024, 7, 2), 0, 0, (_row(memo, debit=1),)
         ),
     )

@@ -6,11 +6,12 @@ from sqlalchemy import Connection, select
 from evaldata.meezan import write_meezan_statement
 from evaldata.persona import load_personas, transactions
 from evaldata.statement import TRACER_FACTS, write_statement
-from pakkifile.vault import meezan
+from pakkifile.vault import statements
 from pakkifile.vault.classify import AccountKind, classify
 from pakkifile.vault.ingest import add_person, ingest_statement_csv
-from pakkifile.vault.meezan import ingest_meezan_pdf, pdf_text
+from pakkifile.vault.meezan import ingest_meezan_pdf
 from pakkifile.vault.schema import statement_row
+from pakkifile.vault.statements import pdf_text
 
 SPONSORS = ("SYN TARIQ MAHMOOD",)
 
@@ -117,7 +118,7 @@ def test_an_ambiguous_row_is_stored_unclassified_and_waits_for_review(
     persona = load_personas()["syn-dev-payoneer"]
     path = write_meezan_statement(persona, tmp_path)
     text = pdf_text(path).replace("IBFT kiraya makaan", "IBFT SYN PERSON 0001")
-    monkeypatch.setattr(meezan, "pdf_text", lambda *_: text)
+    monkeypatch.setattr(statements, "pdf_text", lambda *_: text)
     ingest_meezan_pdf(db, add_person(db, "applicant"), path)
     row = db.execute(
         select(statement_row).where(statement_row.c.description == "IBFT SYN PERSON 0001")
