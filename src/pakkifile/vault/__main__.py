@@ -32,7 +32,7 @@ _INGEST = {"meezan": ingest_meezan_pdf, "payoneer": ingest_payoneer_pdf, "prc": 
 def kind_of(text: str) -> Kind:
     if "Booking Date" in text and "Available Balance" in text:
         return "meezan"
-    if "Running Balance" in text and "Primary Account Number" in text:
+    if "Running Balance" in text and "Issuing Date" in text:
         return "payoneer"
     if "e-PRC No." in text:
         return "prc"

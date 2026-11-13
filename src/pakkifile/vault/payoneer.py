@@ -25,10 +25,12 @@ from pakkifile.vault.statements import (
 )
 
 _DAY = r"\d{1,2} [A-Z][a-z]{2}, \d{4}"  # "19 Sep, 2024"
-_FIELD = re.compile(
-    r"^\s*(Primary Account Number|Account Currency|Period|Issuing Date):\s*(.+?)\s*$"
-)
-_PERIOD = re.compile(rf"({_DAY}) - ({_DAY})")
+# The header (a public sample, 2026-11-13): the holder's name and address on the left; on the
+# right "Account USD balance", "Period 02/01/2024 - 06/24/2024" and "Issuing Date". It
+# prints no account number, so the account is named by its currency.
+_ACCOUNT = re.compile(r"\s*Account (?P<currency>[A-Z]{3}) balance\s*")
+_US_DAY = r"\d{2}/\d{2}/\d{4}"
+_PERIOD = re.compile(rf"Period ({_US_DAY}) - ({_US_DAY})")
 # "-12.00 USD Completed 88.00": the amount carries its currency; some rows have no status.
 _ROW = re.compile(
     rf"^\s*(?P<day>{_DAY})\s+(?P<description>.+?)\s+(?P<amount>-?[\d,]+\.\d{{2}}) (?P<code>[A-Z]{{3}})"
@@ -42,6 +44,22 @@ def _day(text: str) -> date:
     return datetime.strptime(text, "%d %b, %Y").date()
 
 
+def account_name(currency: str) -> str:
+    """What the vault calls a Payoneer account: its statement prints no account number."""
+    return f"Payoneer {currency}"
+
+
+def _holder(lines: list[str]) -> str:
+    """The first line's left column: the holder's name, above their address."""
+    first = next(line for line in lines if line.strip())
+    left = _PERIOD.sub("", _ACCOUNT.sub("  ", first))
+    return re.split(r"\s{2,}", left.strip())[0]
+
+
+def _us_day(text: str) -> date:
+    return datetime.strptime(text, "%m/%d/%Y").date()
+
+
 def _is_header(line: str) -> bool:
     return all(name in line for name in _COLUMNS)
 
@@ -49,22 +67,16 @@ def _is_header(line: str) -> bool:
 def parse_payoneer(text: str) -> Statement:
     """Read a statement's text, or raise StatementError if it can't be read or doesn't add up."""
     lines = statement_lines(text)
-    fields = {m[1]: m[2] for line in lines if (m := _FIELD.match(line))}
-    # Above the fields: the company header, then the address block, which opens with the holder.
-    above = [
-        line.strip()
-        for line in lines[: next((i for i, line in enumerate(lines) if _FIELD.match(line)), 0)]
-        if line.strip()
-    ]
-    try:
-        title = above[1]
-        number, currency = fields["Primary Account Number"], fields["Account Currency"]
-        period = _PERIOD.fullmatch(fields["Period"])
-        if period is None:
-            raise StatementError(f"unreadable period: {fields['Period']!r}")
-        period_from, period_to = _day(period[1]), _day(period[2])
-    except (IndexError, KeyError) as error:
-        raise StatementError(f"not a Payoneer statement: no {error} field") from error
+    account = next((m for line in lines if (m := _ACCOUNT.search(line))), None)
+    if account is None:
+        raise StatementError("not a Payoneer statement: no 'Account ... balance'")
+    period = next((m for line in lines if (m := _PERIOD.search(line))), None)
+    if period is None:
+        raise StatementError("not a Payoneer statement: no 'Period MM/DD/YYYY - MM/DD/YYYY'")
+    currency = account["currency"]
+    title = _holder(lines)
+    number = account_name(currency)
+    period_from, period_to = _us_day(period[1]), _us_day(period[2])
 
     rows: list[StatementRow] = []
     description_at: int | None = None  # set once the table starts
