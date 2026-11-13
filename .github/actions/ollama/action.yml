@@ -1,9 +1,15 @@
-name: Ollama with the extraction model
-description: Installs Ollama, downloads the approved model (ADR-0045) and sets its configuration.
+name: Ollama with an approved model
+description: Installs Ollama and downloads one approved model (ADR-0045, ADR-0051).
+inputs:
+  model:
+    description: The model to download
+    default: qwen3:14b
 runs:
   using: composite
   steps:
     - shell: bash
+      env:
+        MODEL: ${{ inputs.model }}
       run: |
         echo "PAKKIFILE_EXTRACTION_MODEL=qwen3:14b" >> "$GITHUB_ENV"
         echo "PAKKIFILE_EXTRACTION_THINK=off" >> "$GITHUB_ENV"
@@ -15,4 +21,4 @@ runs:
         done
         curl -sf http://127.0.0.1:11434/api/tags >/dev/null || (nohup ollama serve >/tmp/ollama.log 2>&1 &)
         timeout 60 bash -c 'until curl -sf http://127.0.0.1:11434/api/tags >/dev/null; do sleep 1; done'
-        ollama pull qwen3:14b
+        ollama pull "$MODEL"

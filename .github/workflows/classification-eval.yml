@@ -1,0 +1,38 @@
+name: classification-eval
+
+# Scores the row-classification model (ADR-0051) when something that shapes its input or
+# output changes. Runs on GitHub's free runner: nothing costs money.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - src/pakkifile/llm/**
+      - src/pakkifile/vault/classify.py
+      - evaldata/personas/**
+      - eval/classification.py
+      - .github/actions/ollama/**
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  classification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.23"
+          python-version: "3.12"
+      - run: uv sync --frozen
+      - uses: ./.github/actions/ollama
+        with:
+          model: qwen3:8b
+      - run: uv run --frozen python -m eval.classification | tee -a "$GITHUB_STEP_SUMMARY"
+        env:
+          PAKKIFILE_CLASSIFY_MODEL: qwen3:8b # ADR-0051; thinking stays off by default
