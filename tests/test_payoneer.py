@@ -1,4 +1,5 @@
 import re
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -9,7 +10,7 @@ from evaldata.pdf import amount_text
 from evaldata.persona import Persona, load_personas, transactions
 from pakkifile.vault import statements
 from pakkifile.vault.ingest import add_person
-from pakkifile.vault.payoneer import ingest_payoneer_pdf, parse_payoneer
+from pakkifile.vault.payoneer import account_name, ingest_payoneer_pdf, parse_payoneer
 from pakkifile.vault.schema import evidence_item, statement, statement_row
 from pakkifile.vault.statements import StatementError, pdf_text
 
@@ -27,7 +28,10 @@ def _rows(persona: Persona) -> list[tuple[str, int]]:
 def test_every_row_and_header_field_reads_back_exactly(persona: Persona, tmp_path: Path) -> None:
     parsed = parse_payoneer(pdf_text(write_payoneer_statement(persona, tmp_path)))
     account = persona.accounts["payoneer"]
-    assert (parsed.account_title, parsed.account_number) == (account.holder, account.number)
+    assert (parsed.account_title, parsed.account_number) == (
+        account.holder,
+        account_name(account.currency),
+    )
     assert parsed.currency == account.currency
     assert (parsed.period_from, parsed.period_to) == (persona.period_from, persona.period_to)
     assert parsed.opening_minor == account.opening
@@ -92,8 +96,9 @@ def test_ingest_stores_rows_in_the_account_currency_with_platform_classes(
 
 def test_a_statement_with_no_rows_is_refused_since_its_balance_is_unknown() -> None:
     header = (
-        "SYN PLATFORM\nSYN HOLDER\nPrimary Account Number: SYN-1\nAccount Currency: USD\n"
-        "Period: 1 Apr, 2026 - 30 Apr, 2026\nIssuing Date: 1 May, 2026\n"
+        "SYN HOLDER                       Account USD balance\n"
+        "SYN ADDRESS                      Period 04/01/2026 - 04/30/2026\n"
+        "                                 Issuing Date 05/01/2026\n"
         "Date        Description        Amount    Status    Running Balance\n"
     )
     with pytest.raises(StatementError, match="no transactions"):
@@ -119,12 +124,10 @@ def test_unknown_text_after_the_table_stops_rather_than_join_a_description(
 
 # The real row shape (owner, 2026-11-12), values replaced: newest first, the amount with its
 # currency, a status only on some rows, the running balance last.
-REAL_ROWS = """SYN PLATFORM
-SYN HOLDER
-Primary Account Number: SYN-1
-Account Currency: USD
-Period: 1 Feb, 2024 - 29 Feb, 2024
-Issuing Date: 1 Mar, 2024
+REAL_ROWS = """SYN HOLDER                                      Account USD balance
+SYN ADDRESS                                     Period 02/01/2024 - 02/29/2024
+SYN CITY 00000                                  Issuing Date 03/01/2024
+0000000000
 Date          Description                              Amount       Status      Running Balance
 27 Feb, 2024  Payment from SYN CLIENT Inc.             188.40 USD                    454.20
 21 Feb, 2024  Withdrawal to SYN BANK (0000)            -150.00 USD  Completed        265.80
@@ -160,3 +163,36 @@ def test_rows_printed_oldest_first_stop_the_parse() -> None:
 def test_a_statement_without_its_table_header_says_so() -> None:
     with pytest.raises(StatementError, match=r"no Date, .*, Running Balance header"):
         parse_payoneer(REAL_ROWS.replace("Running Balance", ""))
+
+
+def test_the_real_header_names_the_holder_currency_and_period() -> None:
+    parsed = parse_payoneer(REAL_ROWS)
+    assert (parsed.account_title, parsed.currency) == ("SYN HOLDER", "USD")
+    assert (parsed.period_from, parsed.period_to) == (date(2024, 2, 1), date(2024, 2, 29))
+
+
+SPLIT_HEADER = (
+    REAL_ROWS.replace(
+        "SYN HOLDER                                      Account USD balance\n", "SYN HOLDER\n"
+    )
+    .replace("0000000000\n", "0000000000\nAccount EUR balance\n")
+    .replace(" USD", " EUR")
+)
+
+
+def test_a_header_whose_right_column_has_lines_of_its_own_reads() -> None:
+    parsed = parse_payoneer(SPLIT_HEADER)
+    assert (parsed.account_title, parsed.currency) == ("SYN HOLDER", "EUR")
+
+
+def test_the_holder_is_the_first_line_whichever_line_the_currency_shares() -> None:
+    moved = REAL_ROWS.replace(
+        "SYN HOLDER                                      Account USD balance\nSYN ADDRESS  ",
+        "SYN HOLDER\nSYN ADDRESS                                     Account USD balance  ",
+    )
+    assert parse_payoneer(moved).account_title == "SYN HOLDER"
+
+
+def test_a_statement_without_its_header_says_so() -> None:
+    with pytest.raises(StatementError, match=r"Account \.\.\. balance"):
+        parse_payoneer(REAL_ROWS.replace("Account USD balance", ""))

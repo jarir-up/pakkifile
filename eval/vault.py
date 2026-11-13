@@ -23,11 +23,11 @@ from sqlalchemy import Connection, select
 
 from evaldata.meezan import write_meezan_statement
 from evaldata.payoneer import write_payoneer_statement
-from evaldata.persona import Persona, load_personas, month_start, transactions
+from evaldata.persona import Account, Persona, load_personas, month_start, transactions
 from pakkifile.vault.db import vault_engine
 from pakkifile.vault.ingest import add_person
 from pakkifile.vault.meezan import ingest_meezan_pdf
-from pakkifile.vault.payoneer import ingest_payoneer_pdf
+from pakkifile.vault.payoneer import account_name, ingest_payoneer_pdf
 from pakkifile.vault.schema import metadata, statement, statement_row
 
 # Approved by the owner, 2026-11-12, from the first numbers (#37).
@@ -77,6 +77,10 @@ def ingest_persona(conn: Connection, persona: Persona, out: Path) -> int:
     return person
 
 
+def _stored_as(name: str, account: Account) -> str:
+    return account_name(account.currency) if name == "payoneer" else account.number
+
+
 def score_persona(conn: Connection, persona: Persona, person: int) -> VaultScore:
     rows = conn.execute(
         select(
@@ -93,7 +97,12 @@ def score_persona(conn: Connection, persona: Persona, person: int) -> VaultScore
     want: Counter[Key] = Counter()
     labels = {}
     for t in facts:
-        key = (persona.accounts[t.account].number, t.date, t.description, t.amount_minor)
+        key = (
+            _stored_as(t.account, persona.accounts[t.account]),
+            t.date,
+            t.description,
+            t.amount_minor,
+        )
         want[key] += 1
         labels[key] = t.row_class
     got: Counter[Key] = Counter()
@@ -111,7 +120,8 @@ def score_persona(conn: Connection, persona: Persona, person: int) -> VaultScore
     )
     accounts = persona.accounts.items()
     closing_right = sum(
-        closings.get(account.number) == persona.expected.closing[name] for name, account in accounts
+        closings.get(_stored_as(name, account)) == persona.expected.closing[name]
+        for name, account in accounts
     )
     return VaultScore(
         persona=persona.id,

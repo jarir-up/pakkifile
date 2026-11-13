@@ -1,13 +1,13 @@
 """Synthetic statements in the Payoneer PDF layout (ADR-0054).
 
 Layout source: a public sample statement (Scribd document 788425026), as the owner read it on
-2026-11-10. Header: company header, address, Primary Account Number, Account Currency,
-Period, Issuing Date. Columns: Date, Description, Amount, Status, Running Balance.
+2026-11-10, and a second sample, 2026-11-13. Header: the holder's name, address and phone on
+the left; "Account USD balance", "Period MM/DD/YYYY - MM/DD/YYYY" and "Issuing Date" on the
+right. Columns: Date, Description, Amount, Status, Running Balance.
 
 Rows (owner, 2026-11-12) run newest first, dated "19 Sep, 2024", the amount carrying its
 currency ("-12.00 USD"), a status such as "Completed" on some rows, then the running balance.
-Not yet confirmed, so guessed here: "Label: value" header lines, and which rows show a status
-(here, money out only).
+Not yet confirmed, so guessed here: which rows show a status (here, money out only).
 """
 
 import textwrap
@@ -17,7 +17,6 @@ from pathlib import Path
 from evaldata.pdf import ADDRESS, amount_text, encrypt, paginate, write_pdf
 from evaldata.persona import Persona, transactions
 
-COMPANY = "SYN PAYMENTS PLATFORM"  # not Payoneer's own header: this file imitates no one
 DESCRIPTION_WIDTH = 40
 DESCRIPTION_AT = 14
 AMOUNT_END, STATUS_AT, BALANCE_END = 70, 74, 104
@@ -53,17 +52,12 @@ def write_payoneer_statement(persona: Persona, out_dir: Path, password: str | No
         )
     lines = [line for block in reversed(blocks) for line in block]
     first_page = [
-        COMPANY,
+        f"{account.holder:<48}Account {account.currency} balance",
+        f"{ADDRESS:<48}Period {persona.period_from:%m/%d/%Y} - {persona.period_to:%m/%d/%Y}",
+        f"{'Synthetic City 00000':<48}Issuing Date {persona.period_to + timedelta(days=1):%m/%d/%Y}",
+        "0000000000",
         "",
-        account.holder,
-        ADDRESS,
-        "",
-        f"Primary Account Number: {account.number}",
-        f"Account Currency: {account.currency}",
-        f"Period: {_date(persona.period_from)} - {_date(persona.period_to)}",
-        f"Issuing Date: {_date(persona.period_to + timedelta(days=1))}",
-        "",
-        "SYNTHETIC STATEMENT - NOT A PLATFORM DOCUMENT",  # below the fields: not the holder
+        "SYNTHETIC STATEMENT - NOT A PLATFORM DOCUMENT",  # below the header: not the holder
         "",
     ]
     header = [
