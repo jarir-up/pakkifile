@@ -47,13 +47,17 @@ Don't install skills that duplicate what this repo already does. `.claude/settin
 
 ## Commands
 
+Run every command from the repo root.
+
 | Purpose | Command |
 |---|---|
 | All checks (lint, types, tests, build) | `./scripts/check.sh` |
 | Fast checks only (lint, types) | `./scripts/check.sh --fast` |
 | Start the local database (tests need it) | `docker compose up -d --wait db` |
 | Build the checklist site | `uv run python -m pakkifile.web.site --out build/site` |
+| Put evidence files into the local vault; prints the person's id | `uv run python -m pakkifile.vault <files> [--person <id>]` |
 | Run the app locally (review page, 127.0.0.1:8000) | `uv run python -m pakkifile.web.app --person <id>` |
+| List a real statement's memos, masked, into `vault/` for labelling | `uv run python -m eval.memo_lines <statement.pdf>` |
 
 Hooks run the fast checks after each edit and the full checks before you finish a turn with uncommitted changes. When a hook reports a failure, fix the cause; don't silence the check.
 
