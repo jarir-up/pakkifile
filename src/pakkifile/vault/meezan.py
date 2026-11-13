@@ -1,6 +1,8 @@
 """Meezan Bank PDF statements (ADR-0049).
 
-Columns are found from the header line's positions, so a credit is never read as a debit.
+A row's sign says its column: "+ PKR" a credit, "- PKR" a debit, and the unsigned amount at
+the end of the line its balance. Amounts don't sit under their header labels on a real
+statement, so positions can't be trusted.
 """
 
 import re
@@ -37,9 +39,11 @@ _LABELS = (
 _CELL = re.compile(r"\S+(?: \S+)*")  # text up to a gap of two or more spaces
 _DATE = re.compile(r"^\s*(\d{2}[A-Z][a-z]{2} \d{4})\s")
 _CURRENCY = re.compile(r"\(([A-Z]{3})\)$")
-# "560,000.00", "PKR560,000.00" or "+ PKR560,000.00": the column, not the sign, says credit.
-_AMOUNT = re.compile(r"(?:[+-] ?)?(?:\b[A-Z]{3})?(-?[\d,]+\.\d{2})")
-_COLUMNS = ("Credit", "Debit", "Available Balance")
+# "+ PKR248,500.00" is a credit, "- PKR50,000.00" a debit, "PKR299,464.71" the balance. On a
+# real statement amounts don't sit under their header labels, so the sign says the column
+# (owner's statement, 2026-11-13).
+_AMOUNT = re.compile(r"(?:(?P<sign>[+-]) ?)?(?:\b[A-Z]{3})?(?P<value>-?[\d,]+\.\d{2})")
+_BY_SIGN = {"+": "Credit", "-": "Debit", None: "Available Balance"}
 
 
 def _day(text: str) -> date:
@@ -70,19 +74,28 @@ def _is_header(line: str) -> bool:
     return "Booking Date" in line and "Available Balance" in line
 
 
-def _column_ends(header: str) -> dict[str, int]:
-    return {name: header.index(name) + len(name) for name in _COLUMNS}
+def _in_a_money_column(line: str, match: re.Match[str]) -> bool:
+    """After a column gap: signed, or unsigned and last on the line (the balance).
+
+    Anything else ("FBRTax:PKR48.08-STAN", "Reversal - PKR10.00 of fee") is narration.
+    """
+    after_gap = line[: match.start()].endswith("  ")
+    return after_gap and (bool(match["sign"]) or not line[match.end() :].strip())
 
 
-def _amounts(line: str, ends: dict[str, int]) -> dict[str, int]:
-    """Assign each amount on a line to the column whose right edge it sits nearest."""
+def _amounts(line: str) -> tuple[str, dict[str, int]]:
+    """The line without its money-column amounts, and those amounts by column."""
     found: dict[str, int] = {}
-    for match in _AMOUNT.finditer(line):
-        column = min(ends, key=lambda name: abs(ends[name] - match.end()))
+    kept = line
+    for match in reversed(list(_AMOUNT.finditer(line))):
+        if not _in_a_money_column(line, match):
+            continue
+        column = _BY_SIGN[match["sign"]]
         if column in found:
             raise StatementError(f"two amounts in the {column} column: {line.strip()}")
-        found[column] = parse_minor(match.group(1))
-    return found
+        found[column] = parse_minor(match["value"])
+        kept = kept[: match.start()] + kept[match.end() :]
+    return kept, found
 
 
 @dataclass
@@ -93,12 +106,13 @@ class _OpenRow:
     words: list[str]
     amounts: dict[str, int]
 
-    def add(self, text: str, amounts: dict[str, int]) -> None:
-        if words := _AMOUNT.sub("", text).strip():
+    def add(self, line: str, text: str, amounts: dict[str, int]) -> None:
+        """`text` is `line` without its money-column amounts."""
+        if words := " ".join(text.split()):
             self.words.append(words)
         for column, amount in amounts.items():
             if column in self.amounts:
-                raise StatementError(f"two amounts in the {column} column: {text.strip()}")
+                raise StatementError(f"two amounts in the {column} column: {line.strip()}")
             self.amounts[column] = amount
 
     def closed(self, row_no: int) -> StatementRow:
@@ -119,8 +133,7 @@ def parse_meezan(text: str) -> Statement:
     """Read a statement's text, or raise StatementError if it can't be read or doesn't add up."""
     lines = statement_lines(text)
     fields = _header_fields(lines)
-    header = next((line for line in lines if _is_header(line)), None)
-    if header is None:
+    if not any(_is_header(line) for line in lines):
         raise StatementError(
             "not a Meezan Bank statement: no Booking Date ... Available Balance row"
         )
@@ -135,21 +148,20 @@ def parse_meezan(text: str) -> Statement:
         raise StatementError(f"not a Meezan Bank statement: no {error} field") from error
     except ValueError as error:
         raise StatementError(f"unreadable header field: {error}") from error
-    ends = _column_ends(header)
     date_end = 0  # where the open row's date ended; its other lines leave that span blank
     rows_read: list[_OpenRow] = []
     for line in lines:
-        if _is_header(line):  # repeats on every page, where columns may sit differently
-            ends = _column_ends(line)
+        if _is_header(line):  # repeats on every page
             continue
         if not line.strip() or is_page_footer(line):
             continue
         if date_match := _DATE.match(line):
             date_end = date_match.end()
             rows_read.append(_OpenRow(_day(date_match.group(1)), [], {}))
-            rows_read[-1].add(line[date_end:], _amounts(line, ends))
+            kept, amounts = _amounts(line)
+            rows_read[-1].add(line, kept[date_end:], amounts)
         elif rows_read and line[:date_end].strip() == "":
-            rows_read[-1].add(line, _amounts(line, ends))  # narration or amounts on a later line
+            rows_read[-1].add(line, *_amounts(line))  # narration or amounts on a later line
     rows = [row.closed(number) for number, row in enumerate(rows_read, start=1)]
 
     return checked(

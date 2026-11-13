@@ -205,3 +205,54 @@ def test_two_amounts_in_one_column_stop_the_parse() -> None:
     rows = OWNER_ROW + "amounts|- PKR1.00|PKR1.00\n"
     with pytest.raises(StatementError, match="two amounts in the"):
         parse_meezan(_table(rows))
+
+
+def test_amounts_are_placed_by_sign_where_the_real_statement_prints_them() -> None:
+    """Positions from the owner's statement (2026-11-13): amounts don't sit under their header
+    labels, a narration may carry an amount of its own, and the sign says which column."""
+    text = REAL_HEADER.replace(
+        "PKR60,000.00                       PKR60,000.00",
+        "PKR269,749.77                      PKR219,749.77",
+    )
+    rows = (
+        "      05Jul 2024               Money Transferred To SYN PERSON\n"
+        "                               FBRTax:PKR48.08-STAN (000000)\n"
+        + " " * 74
+        + "- PKR50,000.00"
+        + " " * 3
+        + "PKR219,749.77\n"
+    )
+    (parsed,) = parse_meezan(text + rows).rows
+    assert parsed.description == "Money Transferred To SYN PERSON FBRTax:PKR48.08-STAN (000000)"
+    assert (parsed.credit_minor, parsed.debit_minor) == (0, 5_000_000)
+    assert parsed.balance_minor == 21_974_977
+
+
+def test_a_credit_is_known_by_its_plus_sign_wherever_it_sits() -> None:
+    text = REAL_HEADER.replace(
+        "PKR60,000.00                       PKR60,000.00",
+        "PKR50,000.00                       PKR298,500.00",
+    )
+    row = "      02Jul 2024               Cash Deposit 0000000" + " " * 25
+    row += "+ PKR248,500.00" + " " * 3 + "PKR298,500.00\n"
+    (parsed,) = parse_meezan(text + row).rows
+    assert (parsed.credit_minor, parsed.debit_minor) == (24_850_000, 0)
+
+
+@pytest.mark.parametrize(
+    "narration",
+    ["Reversal - PKR10.00 of fee", "Tax deducted PKR48.08", "FBRTax:PKR48.08-STAN (000000)"],
+)
+def test_amounts_inside_a_narration_stay_in_it(narration: str) -> None:
+    rows = OWNER_ROW.replace("text|A C 0000-XXXX0000 STAN (0000000)", f"text|{narration}")
+    (parsed,) = parse_meezan(_table(rows)).rows
+    assert parsed.description == f"Money Transferred To SYN PERSON {narration}"
+    assert (parsed.debit_minor, parsed.balance_minor) == (5_000_000, 21_974_977)
+
+
+def test_an_unsigned_amount_where_a_credit_belongs_stops_the_parse() -> None:
+    rows = OWNER_ROW.replace(
+        "amounts|- PKR50,000.00|PKR219,749.77", "amounts|50,000.00|PKR219,749.77"
+    )
+    with pytest.raises(StatementError):
+        parse_meezan(_table(rows))
