@@ -13,3 +13,6 @@ Issue #35 reads ePRC and S-PRC certificates (FR-10) and links each to the statem
 
 ## Consequences
 The rate is stored only as the certificate prints it, never used for arithmetic, because only `figures` computes money (R-20). The 7-day window is a guess until real certificates show how long a bank takes to issue one. The parser waits for one real ePRC's layout, its numbers replaced, as the Meezan parser did.
+
+## Owner note, 2026-11-13
+Many banks' e-PRCs leave the foreign amount, the rate or both blank or "N/A". Both are stored as null when the certificate gives none. The PKR amount is always present.

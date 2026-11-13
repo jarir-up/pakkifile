@@ -1,6 +1,6 @@
 # ADR-0058: Match a certificate on its date of realization
 
-- Status: Proposed
+- Status: Approved (owner, 2026-11-13)
 
 ## Context
 ADR-0057 matches a certificate to a statement credit booked up to 7 days before the certificate's date. A real e-PRC (a public Habib Metropolitan sample, 2026-11-12) is dated 26-Aug-2024 for proceeds realized on 29-May-2024. Banks issue certificates long after the money arrives, so that rule would leave real certificates unmatched.

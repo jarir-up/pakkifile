@@ -1,15 +1,22 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 
 import pytest
 from sqlalchemy import Connection, select
 
+from evaldata.meezan import write_meezan_statement
 from evaldata.persona import Persona, load_personas, transactions
 from evaldata.prc import prc_remittances, write_prc, write_sprc
 from pakkifile.vault.ingest import add_person
-from pakkifile.vault.prc import ingest_prc_pdf, parse_prc
-from pakkifile.vault.schema import prc_certificate
+from pakkifile.vault.meezan import ingest_meezan_pdf
+from pakkifile.vault.prc import (
+    ingest_prc_pdf,
+    match_certificates,
+    parse_prc,
+    unmatched_certificates,
+)
+from pakkifile.vault.schema import prc_certificate, statement_row
 from pakkifile.vault.statements import StatementError, pdf_text
 
 ALL = load_personas()
@@ -139,4 +146,124 @@ def test_ingest_stores_each_certificate_once_and_unmatched(db: Connection, tmp_p
         )
     ).all()
     assert [s.pkr_minor for s in stored] == _remittances(persona)
-    assert {s.statement_row_id for s in stored} == {None}  # matching waits for ADR-0058
+    assert {s.statement_row_id for s in stored} == {None}  # no statement in the vault yet
+
+
+@pytest.mark.parametrize("printed", ["N/A", ""])
+def test_a_foreign_amount_left_blank_or_na_is_stored_as_none(printed: str) -> None:
+    (cert,) = parse_prc(REAL.replace("EUR 1,000.00", printed))
+    assert (cert.foreign_minor, cert.foreign_currency) == (None, None)
+    assert cert.pkr_minor == 30_025_070
+
+
+def test_the_date_of_realization_is_read() -> None:
+    (cert,) = parse_prc(REAL)
+    assert cert.realized == date(2024, 5, 29)
+
+
+def _ingest_dev(db: Connection, tmp_path: Path) -> int:
+    person = add_person(db, "applicant")
+    ingest_meezan_pdf(db, person, write_meezan_statement(ALL["syn-dev-payoneer"], tmp_path))
+    ingest_prc_pdf(db, person, write_sprc(ALL["syn-dev-payoneer"], tmp_path))
+    return person
+
+
+def test_each_certificate_is_linked_to_its_credit(db: Connection, tmp_path: Path) -> None:
+    person = _ingest_dev(db, tmp_path)
+    assert match_certificates(db, person) == len(_remittances(ALL["syn-dev-payoneer"]))
+    linked = db.execute(
+        select(prc_certificate.c.pkr_minor, statement_row.c.amount_minor, statement_row.c.date)
+        .join(statement_row, statement_row.c.id == prc_certificate.c.statement_row_id)
+        .where(prc_certificate.c.person_id == person)
+    ).all()
+    assert all(pkr == amount for pkr, amount, _ in linked)
+    assert unmatched_certificates(db, person) == []
+    assert match_certificates(db, person) == 0  # nothing left to link
+
+
+def test_a_credit_booked_outside_the_window_leaves_the_certificate_unmatched(
+    db: Connection, tmp_path: Path
+) -> None:
+    person = _ingest_dev(db, tmp_path)
+    first = db.execute(
+        select(prc_certificate.c.id, prc_certificate.c.realized)
+        .where(prc_certificate.c.person_id == person)
+        .order_by(prc_certificate.c.realized)
+    ).first()
+    assert first is not None
+    db.execute(
+        prc_certificate.update()
+        .where(prc_certificate.c.id == first.id)
+        .values(realized=first.realized - timedelta(days=4))  # the credit lands 4 days later
+    )
+    match_certificates(db, person)
+    assert [c.id for c in unmatched_certificates(db, person)] == [first.id]
+
+
+def test_one_credit_proves_only_one_certificate(db: Connection, tmp_path: Path) -> None:
+    person = _ingest_dev(db, tmp_path)
+    cert = db.execute(select(prc_certificate).where(prc_certificate.c.person_id == person)).first()
+    assert cert is not None
+    copy = {k: v for k, v in cert._asdict().items() if k != "id"}
+    db.execute(prc_certificate.insert().values({**copy, "certificate_no": "SYN-COPY"}))
+    match_certificates(db, person)
+    assert [c.certificate_no for c in unmatched_certificates(db, person)] == ["SYN-COPY"]
+
+
+@pytest.mark.parametrize("printed", ["N/A", ""])
+def test_a_rate_left_blank_or_na_is_stored_as_none(printed: str) -> None:
+    (cert,) = parse_prc(REAL.replace("300.25\n", f"{printed}\n"))
+    assert cert.rate is None
+
+
+def _only_certificate(db: Connection, tmp_path: Path) -> tuple[int, int, int]:
+    """A person with one certificate and no statement: (person, certificate id, PKR amount)."""
+    person = add_person(db, "applicant")
+    ingest_prc_pdf(db, person, write_prc(ALL["syn-dev-payoneer"], tmp_path)[0])
+    (cert,) = unmatched_certificates(db, person)
+    return person, cert.id, cert.pkr_minor
+
+
+def _credit(db: Connection, person: int, amount: int, day: date, currency: str = "PKR") -> int:
+    item = db.scalar(
+        select(prc_certificate.c.evidence_item_id).where(prc_certificate.c.person_id == person)
+    )
+    return int(
+        db.execute(
+            statement_row.insert()
+            .values(
+                person_id=person,
+                evidence_item_id=item,
+                row_no=1,
+                date=day,
+                description="SYN CREDIT",
+                amount_minor=amount,
+                currency=currency,
+                needs_review=True,
+            )
+            .returning(statement_row.c.id)
+        ).scalar_one()
+    )
+
+
+def test_a_credit_in_another_currency_never_proves_a_certificate(
+    db: Connection, tmp_path: Path
+) -> None:
+    person, cert, pkr = _only_certificate(db, tmp_path)
+    realized = db.scalar(select(prc_certificate.c.realized).where(prc_certificate.c.id == cert))
+    assert realized is not None
+    _credit(db, person, pkr, realized, currency="USD")
+    assert match_certificates(db, person) == 0
+
+
+def test_the_credit_nearest_the_date_of_realization_wins(db: Connection, tmp_path: Path) -> None:
+    person, cert, pkr = _only_certificate(db, tmp_path)
+    realized = db.scalar(select(prc_certificate.c.realized).where(prc_certificate.c.id == cert))
+    assert realized is not None
+    _credit(db, person, pkr, realized + timedelta(days=3))
+    nearest = _credit(db, person, pkr, realized + timedelta(days=1))
+    match_certificates(db, person)
+    linked = db.scalar(
+        select(prc_certificate.c.statement_row_id).where(prc_certificate.c.id == cert)
+    )
+    assert linked == nearest

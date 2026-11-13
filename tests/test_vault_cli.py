@@ -56,6 +56,20 @@ def test_every_file_is_stored_for_the_person(db: Connection, tmp_path: Path) -> 
     assert _count(db, statement, person) == 2
     assert _count(db, prc_certificate, person) == len(prc_remittances(PERSONA))
     assert _count(db, statement_row, person) == len(transactions(PERSONA))
+    assert done.unmatched == []  # every certificate found its credit
+
+
+def test_certificates_stored_before_their_statement_still_match(
+    db: Connection, tmp_path: Path
+) -> None:
+    person = add_person(db, "applicant")
+    sprc = write_sprc(PERSONA, tmp_path)
+    first = ingest_files(db, person, [sprc], lambda _: None, None)
+    assert len(first.unmatched) == len(prc_remittances(PERSONA))
+    later = ingest_files(
+        db, person, [write_meezan_statement(PERSONA, tmp_path)], lambda _: None, None
+    )
+    assert later.unmatched == []
 
 
 @needs_qpdf
